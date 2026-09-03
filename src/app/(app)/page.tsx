@@ -1,0 +1,97 @@
+import Link from "next/link";
+import { AlertRow } from "@/components/home/alert-row";
+import { BatchCard } from "@/components/home/batch-card";
+import { ShortcutCard } from "@/components/home/shortcut-card";
+import { Icon } from "@/components/ui/icon";
+import { Logo } from "@/components/ui/logo";
+import { CURRENT_DAY, greetingFor } from "@/lib/current";
+import { alertsForDay, makeFarm } from "@/lib/farm-data";
+
+export default function HomePage() {
+  const farm = makeFarm(CURRENT_DAY);
+  const [current] = farm.batches;
+  const alerts = alertsForDay(current);
+  const greeting = greetingFor();
+
+  return (
+    <div className="mx-auto w-full max-w-5xl pb-7">
+      {/* Compact header — the sidebar already carries the logo on desktop */}
+      <div className="flex items-center justify-between border-b border-border bg-surface px-4 pt-2 pb-1 lg:hidden">
+        <Logo size={26} />
+        <Link
+          href="/profile"
+          aria-label="Your profile"
+          className="grid h-9 w-9 place-items-center rounded-full bg-teal text-[13px] font-medium text-white"
+        >
+          {farm.farmer.first[0]}
+          {farm.farmer.last[0]}
+        </Link>
+      </div>
+
+      <div className="px-4 pt-5 pb-2">
+        <p className="caption text-[13px]">
+          {greeting}, {farm.farmer.first}.
+        </p>
+        <h1 className="h1 mt-0.5 text-2xl">{farm.farm.name}</h1>
+      </div>
+
+      <div className="flex items-center justify-between px-4 pt-2 pb-1">
+        <span className="label">Active batches · {farm.batches.length}</span>
+        <Link className="av-link" href="/batches">
+          See all
+        </Link>
+      </div>
+
+      <div className="px-4 pb-2 lg:grid lg:grid-cols-2 lg:gap-x-3 xl:grid-cols-3">
+        {farm.batches.map((b) => (
+          <BatchCard key={b.id} batch={b} primary={b.id === current.id} />
+        ))}
+      </div>
+
+      <div className="flex items-center justify-between px-4 pt-3 pb-1">
+        <span className="label">What needs attention</span>
+        {alerts.length > 0 && (
+          <Link className="av-link" href="/alerts">
+            See all · {alerts.length}
+          </Link>
+        )}
+      </div>
+
+      <div className="px-4 pb-2">
+        {alerts.length === 0 ? (
+          <div className="av-card flex items-center gap-3 p-3.5">
+            <div className="grid h-9 w-9 place-items-center rounded-[10px] bg-soft-mint text-teal">
+              <Icon name="check" size={20} />
+            </div>
+            <div className="flex-1">
+              <div className="text-sm font-medium">All clear</div>
+              <div className="caption text-xs">Nothing to action right now.</div>
+            </div>
+          </div>
+        ) : (
+          alerts.slice(0, 3).map((a) => <AlertRow key={a.id} alert={a} compact />)
+        )}
+      </div>
+
+      <div className="px-4 pt-4 pb-2">
+        <span className="label">Shortcuts</span>
+      </div>
+      <div className="grid grid-cols-2 gap-2.5 px-4 pb-3 lg:grid-cols-4">
+        <ShortcutCard icon="syringe" label="Vaccinations" sub="LaSota due day 21" href="/vaccinations" />
+        <ShortcutCard icon="trend" label="Feed prices" sub="₦750/kg in Ibadan" href="/feed-prices" />
+        <ShortcutCard icon="trophy" label="Benchmark" sub="Top 31% of farms" href="/benchmark" />
+        <ShortcutCard icon="doc" label="Last cycle" sub="+₦1.94M · 26%" href="/reports" />
+      </div>
+
+      <div className="px-4 pt-2 pb-7">
+        <Link
+          href="/batches/new"
+          className="av-btn ghost block h-14 text-teal"
+          style={{ border: "1.5px dashed var(--border-strong)" }}
+        >
+          <Icon name="plus" size={18} /> Start a new batch
+        </Link>
+      </div>
+    </div>
+  );
+}
