@@ -1,9 +1,8 @@
 import Link from "next/link";
 import { StatusPill } from "@/components/ui/pill";
+import { cycleDaysFor } from "@/lib/guide";
 import { naira } from "@/lib/format";
 import type { Batch, BatchSummary } from "@/lib/types";
-
-const CYCLE_DAYS = 42;
 
 function MicroStat({ label, value, bad }: { label: string; value: string; bad?: boolean }) {
   return (
@@ -18,7 +17,9 @@ function MicroStat({ label, value, bad }: { label: string; value: string; bad?: 
 
 /** `primary` outlines the batch currently in focus across the app. */
 export function BatchCard({ batch, primary }: { batch: Batch | BatchSummary; primary?: boolean }) {
-  const pct = Math.min(100, Math.round((batch.day / CYCLE_DAYS) * 100));
+  // Layers rear for 20 weeks before a first egg; a fixed 42 would misread them.
+  const cycleDays = cycleDaysFor(batch.type);
+  const pct = Math.min(100, Math.round((batch.day / cycleDays) * 100));
 
   return (
     <Link
@@ -37,7 +38,7 @@ export function BatchCard({ batch, primary }: { batch: Batch | BatchSummary; pri
             <span className="caption truncate text-xs">{batch.breed}</span>
           </div>
           <div className="caption mt-1 text-xs">
-            Day {batch.day} of {CYCLE_DAYS} · <span className="num">{batch.alive.toLocaleString("en-NG")}</span> birds
+            Day {batch.day} of {cycleDays} · <span className="num">{batch.alive.toLocaleString("en-NG")}</span> birds
           </div>
         </div>
         <StatusPill status={batch.status} />

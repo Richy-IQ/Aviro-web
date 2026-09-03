@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { Icon, type IconName } from "@/components/ui/icon";
-import { phaseForDay, todaysFocus } from "@/lib/guide";
+import { VAX } from "@/lib/farm-data";
+import { cycleDaysFor, guideFor, phaseForDay, todaysFocus } from "@/lib/guide";
+import type { BirdType } from "@/lib/types";
 
 const KIND_STYLE: Record<string, { icon: IconName; bg: string; ink: string }> = {
   vaccine: { icon: "syringe", bg: "var(--warning-soft)", ink: "var(--warning-ink)" },
@@ -12,15 +14,19 @@ const KIND_STYLE: Record<string, { icon: IconName; bg: string; ink: string }> = 
  * Today's short list. Each row is a link with a chevron, so it reads as
  * something to act on rather than something to study.
  */
-export function TodayCard({ day }: { day: number }) {
-  const phase = phaseForDay(day);
-  const focus = todaysFocus(day);
+export function TodayCard({ day, type }: { day: number; type: BirdType }) {
+  const phase = phaseForDay(day, type);
+  // The published vaccination schedule is the broiler one; only offer it where
+  // it actually applies rather than prompting a layer keeper with wrong dates.
+  const vax = guideFor(type).type === "broiler" ? VAX : [];
+  const focus = todaysFocus(day, type, vax);
+  const cycleDays = cycleDaysFor(type);
 
   return (
     <div className="overflow-hidden rounded-card border border-border bg-surface">
       <div className="flex items-center justify-between gap-3 px-4 pt-3.5 pb-2.5">
         <span className="label">
-          Today · day {day} of 42
+          Today · day {day} of {cycleDays}
         </span>
         <Link className="av-link shrink-0 text-[13px]" href="/guide">
           Guide

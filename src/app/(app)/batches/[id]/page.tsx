@@ -7,10 +7,9 @@ import { Icon } from "@/components/ui/icon";
 import { TopBar } from "@/components/ui/top-bar";
 import { CURRENT_DAY } from "@/lib/current";
 import { makeFarm } from "@/lib/farm-data";
+import { cycleDaysFor, guideFor } from "@/lib/guide";
 import { naira, nairaShort } from "@/lib/format";
 import type { Batch } from "@/lib/types";
-
-const CYCLE_DAYS = 42;
 
 /** Pre-render every batch at build time — these pages are pure data. */
 export function generateStaticParams() {
@@ -46,13 +45,15 @@ export default async function BatchDetailPage({ params }: PageProps<"/batches/[i
 
   // Only the focused batch carries a full day-by-day history in the fixture.
   const full = "days" in batch ? batch : null;
+  const cycleDays = cycleDaysFor(batch.type);
+  const guide = guideFor(batch.type);
   const last7 = full ? full.days.slice(-7).reverse() : [];
 
   return (
     <div className="mx-auto w-full max-w-3xl">
       <TopBar
         title={batch.name}
-        subtitle={`${batch.breed} · Day ${batch.day} of ${CYCLE_DAYS}`}
+        subtitle={`${batch.breed} · Day ${batch.day} of ${cycleDays}`}
         backHref="/batches"
       />
 
@@ -62,7 +63,8 @@ export default async function BatchDetailPage({ params }: PageProps<"/batches/[i
           style={{ background: HERO_BG[batch.status], border: "1px solid transparent" }}
         >
           <div className="caption text-xs text-slate-2">
-            Day {batch.day} of ~{CYCLE_DAYS}
+            Day {batch.day} of ~{cycleDays}
+             {guide.cycleGoal}
           </div>
           <div className="mt-1.5 flex items-baseline justify-between gap-3">
             <div className="display text-[32px]" style={{ color: HERO_INK[batch.status] }}>
@@ -76,7 +78,7 @@ export default async function BatchDetailPage({ params }: PageProps<"/batches/[i
             )}
           </div>
           <div className="av-progress mt-3.5">
-            <i style={{ width: `${Math.round((batch.day / CYCLE_DAYS) * 100)}%` }} />
+            <i style={{ width: `${Math.min(100, Math.round((batch.day / cycleDays) * 100))}%` }} />
           </div>
         </div>
 

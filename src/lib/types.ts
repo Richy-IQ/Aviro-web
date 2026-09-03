@@ -58,6 +58,7 @@ export interface BatchSummary {
   id: string;
   name: string;
   breed: string;
+  type: BirdType;
   day: number;
   stocked: number;
   alive: number;

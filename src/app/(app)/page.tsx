@@ -37,7 +37,7 @@ export default function HomePage() {
       </div>
 
       <div className="px-4 pt-2 pb-1">
-        <TodayCard day={current.day} />
+        <TodayCard day={current.day} type={current.type} />
       </div>
 
       <div className="flex items-center justify-between px-4 pt-5 pb-2">
@@ -55,7 +55,7 @@ export default function HomePage() {
 
       {/* Starting a batch sits with the batches, not buried at the foot of the page */}
       <div className="px-4 pt-1">
-        <Link href="/batches/new" className="av-btn tertiary full">
+        <Link href="/batches/new" className="av-btn primary full">
           <Icon name="plus" size={18} stroke={2} /> Start a new batch
         </Link>
       </div>

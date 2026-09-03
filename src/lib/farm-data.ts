@@ -191,11 +191,11 @@ export function makeFarm(day: number): FarmSnapshot {
     batches: [
       makeBatch(day),
       {
-        id: "b-young", name: "Batch C", breed: "Ross 308", day: Math.min(8, day),
+        id: "b-young", name: "Batch C", breed: "Ross 308", type: "broiler", day: Math.min(8, day),
         stocked: 1000, alive: 990, costPerBird: 1240, fcr: 1.32, mortPct: 1.0, status: "ahead",
       },
       {
-        id: "b-tiny", name: "Batch D", breed: "Arbor Acres", day: Math.min(2, day),
+        id: "b-tiny", name: "Batch D", breed: "Arbor Acres", type: "broiler", day: Math.min(2, day),
         stocked: 300, alive: 293, costPerBird: 870, fcr: null, mortPct: 2.3, status: "on-track",
       },
     ],
