@@ -20,7 +20,7 @@ const OWNED_BY: Record<string, string[]> = {
   "/batches": ["/log", "/sale"],
   "/more": [
     "/alerts", "/benchmark", "/farms", "/feed-prices", "/help",
-    "/markets", "/notifications", "/profile", "/settings", "/team", "/vaccinations",
+    "/guide", "/markets", "/notifications", "/profile", "/settings", "/team", "/vaccinations",
   ],
 };
 

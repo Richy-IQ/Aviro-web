@@ -1,3 +1,4 @@
+import { ExportButton } from "@/components/reports/export-sheet";
 import { PnLChart } from "@/components/reports/pnl-chart";
 import { TopBar } from "@/components/ui/top-bar";
 import { PAST_CYCLE } from "@/lib/farm-data";
@@ -11,7 +12,11 @@ export default function ReportsPage() {
 
   return (
     <div className="mx-auto w-full max-w-3xl pb-7">
-      <TopBar title="Cycle report" subtitle={`${c.name} · ${c.breed} · ${c.days} days`} />
+      <TopBar
+        title="Cycle report"
+        subtitle={`${c.name} · ${c.breed} · ${c.days} days`}
+        right={<ExportButton />}
+      />
 
       <div className="p-4">
         <div className="rounded-card bg-teal p-4 text-white">

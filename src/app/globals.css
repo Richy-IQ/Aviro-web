@@ -372,3 +372,34 @@
 
   .av-hr { height: 1px; background: var(--border); border: 0; margin: 0; }
 }
+
+/* ─── Print: the income statement is a real document ───
+   Farmers take this to cooperatives and lenders, so it has to survive being
+   printed or saved as PDF from the browser. App chrome is dropped and colours
+   are forced to ink on white regardless of the viewer's theme. */
+@media print {
+  @page { margin: 14mm; size: A4; }
+
+  .no-print { display: none !important; }
+
+  :root, [data-theme="dark"] {
+    --surface: #fff;
+    --bg: #fff;
+    --slate: #111;
+    --slate-2: #333;
+    --muted: #666;
+    --border: #d4d4d4;
+    --border-strong: #b0b0b0;
+  }
+
+  html, body { background: #fff !important; }
+
+  body { font-size: 11pt; }
+
+  .print-sheet { max-width: none !important; padding: 0 !important; }
+
+  .print-break { break-before: page; }
+  .print-avoid-break { break-inside: avoid; }
+
+  a { text-decoration: none; color: inherit; }
+}

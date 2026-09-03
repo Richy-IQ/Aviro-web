@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { MetricBig } from "@/components/batch/metric-big";
+import { Explain } from "@/components/ui/explain";
 import { SellChart } from "@/components/batch/sell-chart";
 import { Icon } from "@/components/ui/icon";
 import { TopBar } from "@/components/ui/top-bar";
@@ -85,17 +86,20 @@ export default async function BatchDetailPage({ params }: PageProps<"/batches/[i
             label="Cost per bird"
             value={naira(batch.costPerBird)}
             compare={{ good: false, label: "vs last ₦1,910" }}
+            explain="costPerBird"
           />
           <MetricBig
             label="Feed conversion"
             value={batch.fcr != null ? batch.fcr.toFixed(2) : "—"}
             hint="kg feed / kg bird"
+            explain="fcr"
           />
           <MetricBig
             label="Mortality"
             value={`${batch.mortPct.toFixed(1)}%`}
             accent={batch.mortPct > 5 ? "var(--error)" : undefined}
             compare={{ good: batch.mortPct < 5, label: "of 5% target" }}
+            explain="mortality"
           />
           {full && (
             <MetricBig
@@ -103,6 +107,7 @@ export default async function BatchDetailPage({ params }: PageProps<"/batches/[i
               value={nairaShort(full.projProfit)}
               compare={{ good: true, label: `at day ${full.optimalDay}` }}
               primary
+              explain="projectedProfit"
             />
           )}
         </div>
@@ -136,8 +141,11 @@ export default async function BatchDetailPage({ params }: PageProps<"/batches/[i
               <div className="mb-2 flex items-baseline justify-between gap-3">
                 <div>
                   <div className="caption">Best day to sell</div>
-                  <div className="h3 mt-0.5">
-                    Day <span className="num">{full.optimalDay}</span> · {nairaShort(full.projProfit)} profit
+                  <div className="h3 mt-0.5 flex items-center gap-2">
+                    <span>
+                      Day <span className="num">{full.optimalDay}</span> · {nairaShort(full.projProfit)} profit
+                    </span>
+                    <Explain term="sellWindow" />
                   </div>
                 </div>
               </div>

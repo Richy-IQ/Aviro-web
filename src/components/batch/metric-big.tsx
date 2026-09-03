@@ -1,3 +1,6 @@
+import { Explain } from "@/components/ui/explain";
+import type { ExplainerKey } from "@/lib/explainers";
+
 interface MetricBigProps {
   label: string;
   value: string;
@@ -6,9 +9,11 @@ interface MetricBigProps {
   compare?: { good: boolean; label: string };
   /** Fills the tile teal — reserved for the single headline number. */
   primary?: boolean;
+  /** Adds a tap-to-explain control beside the label. */
+  explain?: ExplainerKey;
 }
 
-export function MetricBig({ label, value, hint, accent, compare, primary }: MetricBigProps) {
+export function MetricBig({ label, value, hint, accent, compare, primary, explain }: MetricBigProps) {
   const footer =
     hint ??
     (compare ? (
@@ -30,8 +35,12 @@ export function MetricBig({ label, value, hint, accent, compare, primary }: Metr
         color: primary ? "#fff" : "var(--slate)",
       }}
     >
-      <div className="label mb-1.5" style={primary ? { color: "rgba(255,255,255,.72)" } : undefined}>
-        {label}
+      <div
+        className="label mb-1.5 flex items-center gap-1.5"
+        style={primary ? { color: "rgba(255,255,255,.72)" } : undefined}
+      >
+        <span>{label}</span>
+        {explain && <Explain term={explain} light={primary} />}
       </div>
       <div
         className="num text-[22px] font-medium tracking-[-0.015em]"

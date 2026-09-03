@@ -7,6 +7,7 @@ import { alertsForDay, makeBatch, makeFarm } from "@/lib/farm-data";
 export const metadata = { title: "More · Aviro" };
 
 const LINKS: { href: string; label: string; icon: IconName; sub: string }[] = [
+  { href: "/guide", label: "Growing guide", icon: "shield", sub: "What to do at every stage" },
   { href: "/alerts", label: "Alerts", icon: "bell", sub: "What needs your attention" },
   { href: "/vaccinations", label: "Vaccinations", icon: "syringe", sub: "Schedule for the current batch" },
   { href: "/markets", label: "Markets", icon: "trend", sub: "Prices and buyers near you" },
