@@ -6,7 +6,7 @@ export const metadata = { title: "Help & support · Aviro" };
 export default function HelpPage() {
   return (
     <div className="mx-auto w-full max-w-3xl pb-7">
-      <TopBar title="Help & support" backHref="/more" />
+      <TopBar title="Help & support" backHref="/" />
       <HelpSearch />
     </div>
   );

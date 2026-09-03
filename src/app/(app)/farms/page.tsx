@@ -21,7 +21,7 @@ export default function FarmsPage() {
 
   return (
     <div className="mx-auto w-full max-w-3xl pb-7">
-      <TopBar title="My farms" backHref="/more" />
+      <TopBar title="My farms" backHref="/" />
       <div className="p-4">
         <div className="av-card mb-2.5">
           <div className="mb-3 flex items-center gap-3">

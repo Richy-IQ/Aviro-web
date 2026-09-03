@@ -18,7 +18,7 @@ export default function ProfilePage() {
 
   return (
     <div className="mx-auto w-full max-w-2xl pb-7">
-      <TopBar title="Profile & farm" backHref="/more" />
+      <TopBar title="Profile & farm" backHref="/" />
       <div className="p-4">
         <div className="overflow-hidden rounded-card border border-border">
           {rows.map(([k, v], i) => (

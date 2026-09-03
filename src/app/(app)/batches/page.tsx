@@ -1,8 +1,7 @@
-import Link from "next/link";
 import { BatchCard } from "@/components/home/batch-card";
 import { Empty } from "@/components/ui/empty";
+import { HeaderActions } from "@/components/shell/header-actions";
 import { Fab } from "@/components/ui/fab";
-import { Icon } from "@/components/ui/icon";
 import { TopBar } from "@/components/ui/top-bar";
 import { CURRENT_DAY } from "@/lib/current";
 import { makeFarm } from "@/lib/farm-data";
@@ -19,11 +18,7 @@ export default function BatchesPage() {
       <TopBar
         title="Batches"
         subtitle={`${farm.batches.length} active · ${totalBirds.toLocaleString("en-NG")} birds`}
-        right={
-          <Link href="/batches/new" className="av-btn secondary sm">
-            <Icon name="plus" size={16} stroke={2} /> New batch
-          </Link>
-        }
+        right={<HeaderActions />}
       />
 
       {farm.batches.length === 0 ? (

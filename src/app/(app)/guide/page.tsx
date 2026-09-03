@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { BroodingCheck } from "@/components/guide/brooding-check";
 import { CycleTimeline } from "@/components/guide/cycle-timeline";
+import { HeaderActions } from "@/components/shell/header-actions";
 import { Icon } from "@/components/ui/icon";
 import { TopBar } from "@/components/ui/top-bar";
 import { CURRENT_DAY } from "@/lib/current";
@@ -29,7 +30,11 @@ export default async function GuidePage({ searchParams }: PageProps<"/guide">) {
 
   return (
     <div className="mx-auto w-full max-w-3xl pb-7">
-      <TopBar title="Growing guide" subtitle="What to do, and what to watch for" backHref="/more" />
+      <TopBar
+        title="Growing guide"
+        subtitle="What to do, and what to watch for"
+        right={<HeaderActions />}
+      />
 
       <div className="p-4">
         {/* Bird type is the first choice, because the job is different for each */}

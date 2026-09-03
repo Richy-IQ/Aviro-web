@@ -6,7 +6,7 @@ export const metadata = { title: "Notifications · Aviro" };
 export default function NotificationsPage() {
   return (
     <div className="mx-auto w-full max-w-3xl pb-7">
-      <TopBar title="Notifications" backHref="/more" />
+      <TopBar title="Notifications" backHref="/" />
       <NotificationSettings />
     </div>
   );

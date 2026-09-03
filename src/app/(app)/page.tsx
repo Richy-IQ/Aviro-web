@@ -2,10 +2,10 @@ import Link from "next/link";
 import { AlertRow } from "@/components/home/alert-row";
 import { Greeting } from "@/components/home/greeting";
 import { BatchCard } from "@/components/home/batch-card";
-import { ShortcutCard } from "@/components/home/shortcut-card";
 import { TodayCard } from "@/components/guide/today-card";
 import { Fab } from "@/components/ui/fab";
 import { Icon } from "@/components/ui/icon";
+import { HeaderActions } from "@/components/shell/header-actions";
 import { Logo } from "@/components/ui/logo";
 import { CURRENT_DAY, greetingFor } from "@/lib/current";
 import { alertsForDay, makeFarm } from "@/lib/farm-data";
@@ -21,14 +21,7 @@ export default function HomePage() {
       {/* Compact header — the sidebar already carries the logo on desktop */}
       <div className="flex items-center justify-between border-b border-border bg-surface px-4 pt-2 pb-1 lg:hidden">
         <Logo size={26} />
-        <Link
-          href="/profile"
-          aria-label="Your profile"
-          className="grid h-9 w-9 place-items-center rounded-full bg-teal text-[13px] font-medium text-white"
-        >
-          {farm.farmer.first[0]}
-          {farm.farmer.last[0]}
-        </Link>
+        <HeaderActions />
       </div>
 
       <div className="px-4 pt-5 pb-2">
@@ -83,16 +76,6 @@ export default function HomePage() {
         ) : (
           alerts.slice(0, 3).map((a) => <AlertRow key={a.id} alert={a} compact />)
         )}
-      </div>
-
-      <div className="px-4 pt-6 pb-2">
-        <span className="label">Shortcuts</span>
-      </div>
-      <div className="grid grid-cols-2 gap-2.5 px-4 lg:grid-cols-4">
-        <ShortcutCard icon="shield" label="Growing guide" sub="What to do at every stage" href="/guide" />
-        <ShortcutCard icon="syringe" label="Vaccinations" sub="LaSota due day 21" href="/vaccinations" />
-        <ShortcutCard icon="trend" label="Feed prices" sub="₦750/kg in Ibadan" href="/feed-prices" />
-        <ShortcutCard icon="trophy" label="Benchmark" sub="Top 31% of farms" href="/benchmark" />
       </div>
 
       <Fab href="/log" label="Log today" />
