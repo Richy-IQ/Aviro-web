@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { BroodingCheck } from "@/components/guide/brooding-check";
+import { CycleTimeline } from "@/components/guide/cycle-timeline";
 import { Icon } from "@/components/ui/icon";
 import { TopBar } from "@/components/ui/top-bar";
 import { CURRENT_DAY } from "@/lib/current";
@@ -54,6 +56,11 @@ export default async function GuidePage({ searchParams }: PageProps<"/guide">) {
             </span>
           </div>
           <p className="mt-2 text-[15px] leading-[1.6] text-slate-2">{guide.summary}</p>
+
+          <div className="mt-4">
+            <CycleTimeline guide={guide} currentDay={showsCurrentBatch ? batch.day : undefined} />
+          </div>
+
           <div className="mt-3 rounded-metric bg-teal-haze p-3">
             <div className="label mb-1" style={{ color: "var(--av-teal)" }}>
               The number that decides it
@@ -88,6 +95,12 @@ export default async function GuidePage({ searchParams }: PageProps<"/guide">) {
                   <Spec label="Light" value={phase.light} />
                 </dl>
               </div>
+
+              {phase.id === "brooding" && (
+                <div className="mt-2.5">
+                  <BroodingCheck />
+                </div>
+              )}
 
               <div className="av-card mt-2.5">
                 <div className="label mb-2.5">What to do</div>

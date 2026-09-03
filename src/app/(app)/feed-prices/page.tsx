@@ -1,3 +1,4 @@
+import { LocationPrompt } from "@/components/settings/location-prompt";
 import { TopBar } from "@/components/ui/top-bar";
 import { naira } from "@/lib/format";
 import { FEED_PRICES } from "@/lib/farm-data";
@@ -9,6 +10,7 @@ export default function FeedPricesPage() {
     <div className="mx-auto w-full max-w-3xl pb-7">
       <TopBar title="Feed prices" backHref="/" subtitle="Per kg, updated daily" />
       <div className="px-4 pt-4">
+        <LocationPrompt purpose="So we show the markets nearest you first" />
         {FEED_PRICES.map((p) => {
           const up = p.trend > 0;
           return (

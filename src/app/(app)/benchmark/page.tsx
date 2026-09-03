@@ -1,3 +1,4 @@
+import { LocationPrompt } from "@/components/settings/location-prompt";
 import { TopBar } from "@/components/ui/top-bar";
 import { CURRENT_DAY } from "@/lib/current";
 import { benchmark, makeBatch } from "@/lib/farm-data";
@@ -12,6 +13,7 @@ export default function BenchmarkPage() {
     <div className="mx-auto w-full max-w-3xl pb-7">
       <TopBar title="Benchmark" backHref="/" subtitle="Your numbers against farms like yours" />
       <div className="px-4 pt-4">
+        <LocationPrompt purpose="So we compare you with farms in your area" />
         {rows.map((r) => {
           // Place the farm's value on the p25–p75 band; better is always left.
           const lo = Math.min(r.p25, r.p75);
