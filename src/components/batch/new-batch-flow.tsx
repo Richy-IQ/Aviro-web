@@ -78,10 +78,10 @@ export function NewBatchFlow() {
         </div>
 
         <div className="mx-auto mt-8 flex w-full max-w-[320px] flex-col gap-2">
-          <Link href="/log" className="av-btn primary block">
+          <Link href="/log" className="av-btn primary full">
             Start logging
           </Link>
-          <Link href="/batches" className="av-btn ghost block">
+          <Link href="/batches" className="av-btn ghost full">
             I&rsquo;ll log later
           </Link>
         </div>

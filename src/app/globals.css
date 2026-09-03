@@ -210,7 +210,10 @@
   .av-btn.ghost:hover:not(:disabled) { background: var(--bg); }
   .av-btn.danger { background: var(--error); color: #fff; }
   .av-btn.sm { height: 36px; padding: 0 14px; font-size: 13px; border-radius: 8px; }
-  .av-btn.block { width: 100%; }
+  /* Named "full", not "block": Tailwind ships a `block` utility whose
+     display:block would override .av-btn's inline-flex and stack the icon
+     above the label. */
+  .av-btn.full { width: 100%; }
 
   .av-link { color: var(--av-teal); text-decoration: none; font-weight: 500; cursor: pointer; }
   .av-link:hover { text-decoration: underline; }
@@ -317,18 +320,32 @@
   }
   .av-pulse { animation: av-pulse 1.6s ease-in-out infinite; }
 
-  /* ─── FAB — 56px, harvest orange ─── */
+  /* ─── FAB — harvest orange, floats clear of the tab bar ───
+     Extended by default: the label removes any guessing about what the
+     button does, which matters more than the compact circle. */
   .av-fab {
-    position: absolute; right: 16px; bottom: 84px; z-index: 5;
-    width: 56px; height: 56px; border-radius: 28px;
+    position: fixed; right: 16px; z-index: 30;
+    bottom: calc(84px + env(safe-area-inset-bottom, 0px));
+    display: inline-flex; align-items: center; gap: 8px;
+    height: 56px; padding: 0 22px 0 18px;
+    border-radius: 28px; border: 0;
     background: var(--av-orange); color: #fff;
-    border: 0; cursor: pointer;
-    display: grid; place-items: center;
+    font: 500 15px var(--font-sans);
+    letter-spacing: -0.005em;
+    cursor: pointer;
     box-shadow: var(--shadow-fab);
-    transition: transform .12s;
+    transition: transform .12s, background-color .15s;
     -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
   }
+  .av-fab:hover { background: var(--av-orange-dark); }
   .av-fab:active { transform: scale(0.96); }
+  /* Icon-only variant keeps the original 56px circle. */
+  .av-fab.icon-only { width: 56px; padding: 0; justify-content: center; }
+
+  @media (min-width: 1024px) {
+    .av-fab { bottom: 24px; }
+  }
 
   /* ─── Numpad — 56px keys ─── */
   .av-numpad {

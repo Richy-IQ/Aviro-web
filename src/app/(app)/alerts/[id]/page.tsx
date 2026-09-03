@@ -44,7 +44,7 @@ export default async function AlertDetailPage({ params }: PageProps<"/alerts/[id
 
         <p className="mt-4 text-[15px] leading-[1.6] text-slate-2">{alert.body}</p>
 
-        <button className="av-btn primary block mt-6">{alert.cta}</button>
+        <button className="av-btn primary full mt-6">{alert.cta}</button>
       </div>
     </div>
   );

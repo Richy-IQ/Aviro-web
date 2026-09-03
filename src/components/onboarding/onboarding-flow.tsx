@@ -137,7 +137,7 @@ export function OnboardingFlow() {
             </div>
             <button
               type="button"
-              className="av-btn primary block"
+              className="av-btn primary full"
               onClick={() => (slide === SLIDES.length - 1 ? setStep("phone") : setSlide(slide + 1))}
             >
               {slide === SLIDES.length - 1 ? "Get started" : "Next"}
@@ -169,7 +169,7 @@ export function OnboardingFlow() {
             </div>
             <button
               type="button"
-              className="av-btn primary block"
+              className="av-btn primary full"
               disabled={!phoneValid}
               onClick={() => setStep("otp")}
             >
@@ -288,7 +288,7 @@ export function OnboardingFlow() {
             </div>
             <button
               type="button"
-              className="av-btn primary block"
+              className="av-btn primary full"
               disabled={profile.first.trim().length < 2}
               onClick={() => setStep("farmsetup")}
             >
@@ -353,7 +353,7 @@ export function OnboardingFlow() {
             </div>
             <button
               type="button"
-              className="av-btn primary block mt-4"
+              className="av-btn primary full mt-4"
               disabled={!farm.name.trim() || farm.types.length === 0}
               onClick={() => setStep("complete")}
             >
@@ -374,10 +374,10 @@ export function OnboardingFlow() {
                 tracking — it takes about 60 seconds.
               </p>
             </div>
-            <button type="button" className="av-btn primary block" onClick={finish}>
+            <button type="button" className="av-btn primary full" onClick={finish}>
               Create your first batch
             </button>
-            <button type="button" className="av-btn ghost block mt-2" onClick={() => router.push("/")}>
+            <button type="button" className="av-btn ghost full mt-2" onClick={() => router.push("/")}>
               I&rsquo;ll do this later
             </button>
           </>

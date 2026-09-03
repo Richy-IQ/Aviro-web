@@ -100,10 +100,10 @@ export function RecordSaleFlow({ batch }: { batch: Batch }) {
         )}
 
         <div className="mt-8 flex flex-col gap-2">
-          <Link href="/reports" className="av-btn primary block">
+          <Link href="/reports" className="av-btn primary full">
             See full report
           </Link>
-          <Link href="/batches" className="av-btn ghost block">
+          <Link href="/batches" className="av-btn ghost full">
             Back to batches
           </Link>
         </div>

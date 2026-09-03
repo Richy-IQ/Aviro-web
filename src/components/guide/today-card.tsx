@@ -9,48 +9,54 @@ const KIND_STYLE: Record<string, { icon: IconName; bg: string; ink: string }> = 
 };
 
 /**
- * The novice's anchor: on any given day, the two or three things that actually
- * matter. Server-rendered from the day in the cycle, so it costs nothing.
+ * Today's short list. Each row is a link with a chevron, so it reads as
+ * something to act on rather than something to study.
  */
 export function TodayCard({ day }: { day: number }) {
   const phase = phaseForDay(day);
   const focus = todaysFocus(day);
 
   return (
-    <div className="av-card">
-      <div className="mb-3 flex items-baseline justify-between gap-3">
-        <div>
-          <span className="label">Day {day} · {phase.name}</span>
-          <div className="h3 mt-1">{phase.headline}</div>
-        </div>
+    <div className="overflow-hidden rounded-card border border-border bg-surface">
+      <div className="flex items-center justify-between gap-3 px-4 pt-3.5 pb-2.5">
+        <span className="label">
+          Today · day {day} of 42
+        </span>
         <Link className="av-link shrink-0 text-[13px]" href="/guide">
-          Full guide
+          Guide
         </Link>
       </div>
 
-      <div className="flex flex-col gap-2.5">
-        {focus.map((f) => {
-          const s = KIND_STYLE[f.kind];
-          return (
-            <div key={f.title} className="flex gap-2.5">
-              <div
-                className="grid h-7 w-7 shrink-0 place-items-center rounded-lg"
-                style={{ background: s.bg, color: s.ink }}
-              >
-                <Icon name={s.icon} size={15} />
-              </div>
-              <div className="min-w-0">
-                <div className="text-sm font-medium">{f.title}</div>
-                <p className="caption mt-0.5 text-xs leading-[1.55]">{f.detail}</p>
-              </div>
-            </div>
-          );
-        })}
-      </div>
+      {focus.map((f) => {
+        const s = KIND_STYLE[f.kind];
+        return (
+          <Link
+            key={f.title}
+            href={f.href ?? "/guide"}
+            className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-bg"
+            style={{ borderTop: "1px solid var(--border)" }}
+          >
+            <span
+              className="grid h-8 w-8 shrink-0 place-items-center rounded-lg"
+              style={{ background: s.bg, color: s.ink }}
+            >
+              <Icon name={s.icon} size={16} />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-sm font-medium">{f.title}</span>
+              <span className="caption block truncate text-xs">{f.detail}</span>
+            </span>
+            <Icon name="chevron" size={16} style={{ color: "var(--muted)", flexShrink: 0 }} />
+          </Link>
+        );
+      })}
 
-      <div className="mt-3.5 flex flex-wrap gap-x-4 gap-y-1 border-t border-border pt-3">
-        <Spec label="Temperature" value={phase.temperature} />
-        <Spec label="Feed" value={phase.feed} />
+      <div
+        className="flex flex-wrap gap-x-5 gap-y-1 bg-bg px-4 py-2.5"
+        style={{ borderTop: "1px solid var(--border)" }}
+      >
+        <Spec label="Keep at" value={phase.temperature.split(",")[0]} />
+        <Spec label="Feeding" value={phase.feed} />
       </div>
     </div>
   );
@@ -59,8 +65,8 @@ export function TodayCard({ day }: { day: number }) {
 function Spec({ label, value }: { label: string; value: string }) {
   return (
     <div className="min-w-0">
-      <div className="caption text-[10px] tracking-[.08em] uppercase">{label}</div>
-      <div className="text-xs text-slate-2">{value}</div>
+      <span className="caption text-[10px] tracking-[.08em] uppercase">{label} </span>
+      <span className="text-xs text-slate-2">{value}</span>
     </div>
   );
 }

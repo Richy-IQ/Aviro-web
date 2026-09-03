@@ -260,11 +260,19 @@ export interface Focus {
   title: string;
   detail: string;
   kind: "vaccine" | "task" | "check";
+  href?: string;
+}
+
+/** The actionable opening line — the card shows this, the guide shows the rest. */
+function firstSentence(text: string): string {
+  const end = text.indexOf(". ");
+  return end === -1 ? text : text.slice(0, end + 1);
 }
 
 /**
- * The two or three things that matter most today. Vaccination days always come
- * first — they are date-critical and cannot be made up later.
+ * The two or three things that matter today, each short enough to read at a
+ * glance and each leading somewhere. Vaccination days come first — they are
+ * date-critical and cannot be made up later.
  */
 export function todaysFocus(day: number): Focus[] {
   const out: Focus[] = [];
@@ -275,29 +283,38 @@ export function todaysFocus(day: number): Focus[] {
     out.push({
       kind: "vaccine",
       title: `${vaxToday.name} due today`,
-      detail: `Give by ${vaxToday.route.toLowerCase()}. Missing the day costs you the protection.`,
+      detail: `Give by ${vaxToday.route.toLowerCase()}.`,
+      href: "/vaccinations",
     });
   }
 
   const vaxSoon = VAX.find((v) => v.day > day && v.day - day <= 3);
   if (vaxSoon && !vaxToday) {
+    const days = vaxSoon.day - day;
     out.push({
       kind: "vaccine",
-      title: `${vaxSoon.name} in ${vaxSoon.day - day} day${vaxSoon.day - day === 1 ? "" : "s"}`,
-      detail: `Buy the vaccine now so you are not looking for it on day ${vaxSoon.day}.`,
+      title: `${vaxSoon.name} in ${days} day${days === 1 ? "" : "s"}`,
+      detail: "Buy the vaccine now.",
+      href: "/vaccinations",
     });
   }
 
   // Rotate the phase's tasks so the same advice is not shown every day.
   const task = phase.tasks[day % phase.tasks.length];
-  out.push({ kind: "task", title: task.title, detail: task.detail });
+  out.push({
+    kind: "task",
+    title: task.title,
+    detail: firstSentence(task.detail),
+    href: "/guide",
+  });
 
   if (out.length < 3) {
     const warning = phase.warnings[day % phase.warnings.length];
     out.push({
       kind: "check",
       title: `Watch for: ${warning.sign.toLowerCase()}`,
-      detail: warning.meaning,
+      detail: firstSentence(warning.meaning),
+      href: "/guide",
     });
   }
 

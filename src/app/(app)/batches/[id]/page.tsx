@@ -130,7 +130,7 @@ export default async function BatchDetailPage({ params }: PageProps<"/batches/[i
                   </Link>
                 </div>
               ) : (
-                <Link href="/log" className="av-btn primary block">
+                <Link href="/log" className="av-btn primary full">
                   <Icon name="plus" size={16} stroke={2} /> Log today
                 </Link>
               )}
