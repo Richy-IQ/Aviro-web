@@ -12,9 +12,25 @@ const TABS: { href: string; label: string; icon: IconName }[] = [
   { href: "/more", label: "More", icon: "more" },
 ];
 
+/**
+ * Screens reached from a tab keep that tab lit, even though their URL sits
+ * outside it — otherwise the bar goes blank the moment you open Settings.
+ */
+const OWNED_BY: Record<string, string[]> = {
+  "/batches": ["/log", "/sale"],
+  "/more": [
+    "/alerts", "/benchmark", "/farms", "/feed-prices", "/help",
+    "/markets", "/notifications", "/profile", "/settings", "/team", "/vaccinations",
+  ],
+};
+
 function useActive() {
   const pathname = usePathname();
-  return (href: string) => (href === "/" ? pathname === "/" : pathname.startsWith(href));
+  return (href: string) => {
+    if (pathname === href) return true;
+    if (href !== "/" && pathname.startsWith(`${href}/`)) return true;
+    return (OWNED_BY[href] ?? []).some((p) => pathname === p || pathname.startsWith(`${p}/`));
+  };
 }
 
 /**

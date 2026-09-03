@@ -177,7 +177,7 @@ export default async function BatchDetailPage({ params }: PageProps<"/batches/[i
         )}
 
         <div className="flex gap-2 pb-7">
-          <Link href="/log" className="av-btn ghost flex-1">
+          <Link href="/sale" className="av-btn ghost flex-1">
             <Icon name="naira" size={16} /> Record sale
           </Link>
           <Link href="/log" className="av-btn primary flex-1">

@@ -9,9 +9,14 @@ export const metadata = { title: "More · Aviro" };
 const LINKS: { href: string; label: string; icon: IconName; sub: string }[] = [
   { href: "/alerts", label: "Alerts", icon: "bell", sub: "What needs your attention" },
   { href: "/vaccinations", label: "Vaccinations", icon: "syringe", sub: "Schedule for the current batch" },
-  { href: "/feed-prices", label: "Feed prices", icon: "trend", sub: "Market rates near you" },
+  { href: "/markets", label: "Markets", icon: "trend", sub: "Prices and buyers near you" },
   { href: "/benchmark", label: "Benchmark", icon: "trophy", sub: "How you compare" },
-  { href: "/profile", label: "Profile & farm", icon: "user", sub: "Your details" },
+  { href: "/team", label: "Team", icon: "user", sub: "Who can access this farm" },
+  { href: "/farms", label: "My farms", icon: "farm", sub: "Farms you manage" },
+  { href: "/profile", label: "Profile", icon: "user", sub: "Your details" },
+  { href: "/notifications", label: "Notifications", icon: "bell", sub: "Reminders and alerts" },
+  { href: "/settings", label: "Settings", icon: "settings", sub: "Appearance and language" },
+  { href: "/help", label: "Help & support", icon: "help", sub: "Guides and contact" },
 ];
 
 export default function MorePage() {

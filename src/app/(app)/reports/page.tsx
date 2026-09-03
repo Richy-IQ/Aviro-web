@@ -1,3 +1,4 @@
+import { PnLChart } from "@/components/reports/pnl-chart";
 import { TopBar } from "@/components/ui/top-bar";
 import { PAST_CYCLE } from "@/lib/farm-data";
 import { naira, nairaShort } from "@/lib/format";
@@ -39,6 +40,15 @@ export default function ReportsPage() {
           <div className="av-metric">
             <div className="av-metric-l">Mortality</div>
             <div className="av-metric-v num">{c.mortPct}%</div>
+          </div>
+        </div>
+
+        <div className="mt-6">
+          <span className="label">Profit across cycles</span>
+          <div className="av-card mt-2 overflow-x-auto">
+            <div className="min-w-[420px]">
+              <PnLChart />
+            </div>
           </div>
         </div>
 

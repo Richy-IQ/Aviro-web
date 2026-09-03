@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { AlertRow } from "@/components/home/alert-row";
+import { Greeting } from "@/components/home/greeting";
 import { BatchCard } from "@/components/home/batch-card";
 import { ShortcutCard } from "@/components/home/shortcut-card";
 import { Icon } from "@/components/ui/icon";
@@ -29,9 +30,7 @@ export default function HomePage() {
       </div>
 
       <div className="px-4 pt-5 pb-2">
-        <p className="caption text-[13px]">
-          {greeting}, {farm.farmer.first}.
-        </p>
+        <Greeting name={farm.farmer.first} fallback={greeting} />
         <h1 className="h1 mt-0.5 text-2xl">{farm.farm.name}</h1>
       </div>
 
