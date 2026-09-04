@@ -34,8 +34,7 @@ jobs:
 
       # The build is where Next validates routes and generates types, so a
       # broken href or a bad page signature fails here rather than in the app.
+      # No environment needed: configuration is resolved at run time, not
+      # baked in, so the same artifact builds anywhere.
       - name: Build
         run: npm run build
-        env:
-          # A non-secret placeholder: the build only needs it to be a valid URL.
-          API_URL: http://localhost:8000/api
