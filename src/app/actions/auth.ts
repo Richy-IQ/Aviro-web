@@ -32,13 +32,23 @@ function toFailure<T>(error: unknown): ActionResult<T> {
   return { ok: false, message: "Something went wrong. Please try again." };
 }
 
-export async function requestCode(phone: string): Promise<ActionResult<{ sentTo: string }>> {
+export async function requestCode(
+  phone: string,
+): Promise<ActionResult<{ sentTo: string; demoCode?: string; demoNotice?: string }>> {
   try {
-    const data = await apiFetch<{ sent_to: string; expires_in_seconds: number }>(
-      "/v1/auth/request-code/",
-      { method: "POST", body: { phone }, anonymous: true },
-    );
-    return { ok: true, data: { sentTo: data.sent_to } };
+    const data = await apiFetch<{
+      sent_to: string;
+      expires_in_seconds: number;
+      // Present only when the API is running in demo mode, which it says so
+      // in the response itself.
+      demo_code?: string;
+      demo_notice?: string;
+    }>("/v1/auth/request-code/", { method: "POST", body: { phone }, anonymous: true });
+
+    return {
+      ok: true,
+      data: { sentTo: data.sent_to, demoCode: data.demo_code, demoNotice: data.demo_notice },
+    };
   } catch (error) {
     return toFailure(error);
   }
