@@ -21,8 +21,10 @@ jobs:
           node-version: 24
           cache: npm
 
-      # `npm ci` installs exactly the lockfile, which is what CI should test.
-      - run: npm ci
+      # `npm install` rather than `npm ci`: the native optional dependencies
+      # (Tailwind oxide, lightningcss) cannot all be satisfied from a single
+      # lockfile across macOS and Linux, and developers work on both.
+      - run: npm install --no-audit --no-fund
 
       - name: Typecheck
         run: npm run typecheck
@@ -35,6 +37,5 @@ jobs:
       - name: Build
         run: npm run build
         env:
-          # Non-secret placeholders: the build only needs these to be valid URLs.
-          NEXT_PUBLIC_API_URL: http://localhost:8000/api
-          API_INTERNAL_URL: http://localhost:8000/api
+          # A non-secret placeholder: the build only needs it to be a valid URL.
+          API_URL: http://localhost:8000/api
