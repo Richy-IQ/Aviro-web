@@ -18,7 +18,7 @@ const initials = (n: string) =>
 export default function MarketsPage() {
   return (
     <div className="mx-auto w-full max-w-3xl pb-7">
-      <TopBar title="Markets" subtitle="Live prices across Nigeria" backHref="/more" />
+      <TopBar title="Markets" subtitle="Live prices across Nigeria" backHref="/money" />
       <div className="p-4">
         <div className="av-card mb-3 bg-orange-tint" style={{ borderColor: "transparent" }}>
           <span className="label" style={{ color: "var(--av-orange-dark)" }}>

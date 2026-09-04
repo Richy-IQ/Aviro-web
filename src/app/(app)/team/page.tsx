@@ -23,7 +23,7 @@ export default function TeamPage() {
       <TopBar
         title="Team"
         subtitle="People who can log on your farm"
-        backHref="/more"
+        backHref="/"
         right={<InviteButton />}
       />
 

@@ -8,13 +8,14 @@
     "start": "next start",
     "preview": "next build && next start",
     "lint": "eslint",
-    "typecheck": "tsc --noEmit",
-    "check": "npm run typecheck && npm run lint && npm run build"
+    "typecheck": "next typegen && tsc --noEmit",
+    "check": "npm run typecheck && npm run lint && API_URL=${API_URL:-http://localhost:8000/api} npm run build"
   },
   "dependencies": {
     "next": "16.3.4",
     "react": "19.2.8",
-    "react-dom": "19.2.8"
+    "react-dom": "19.2.8",
+    "server-only": "^0.0.1"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

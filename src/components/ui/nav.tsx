@@ -5,11 +5,14 @@ import { usePathname } from "next/navigation";
 import { Icon, type IconName } from "./icon";
 import { Logo } from "./logo";
 
+// Tabs name the jobs a farmer comes to do. Account settings sit behind the
+// avatar instead of taking a tab, and alerts live in a bell that is visible on
+// every screen rather than behind a menu.
 const TABS: { href: string; label: string; icon: IconName }[] = [
   { href: "/", label: "Home", icon: "home" },
   { href: "/batches", label: "Batches", icon: "list" },
-  { href: "/reports", label: "Reports", icon: "doc" },
-  { href: "/more", label: "More", icon: "more" },
+  { href: "/money", label: "Money", icon: "naira" },
+  { href: "/guide", label: "Guide", icon: "shield" },
 ];
 
 /**
@@ -17,11 +20,8 @@ const TABS: { href: string; label: string; icon: IconName }[] = [
  * outside it — otherwise the bar goes blank the moment you open Settings.
  */
 const OWNED_BY: Record<string, string[]> = {
-  "/batches": ["/log", "/sale"],
-  "/more": [
-    "/alerts", "/benchmark", "/farms", "/feed-prices", "/help",
-    "/guide", "/markets", "/notifications", "/profile", "/settings", "/team", "/vaccinations",
-  ],
+  "/batches": ["/log", "/sale", "/vaccinations"],
+  "/money": ["/reports", "/feed-prices", "/markets", "/benchmark"],
 };
 
 function useActive() {
@@ -37,7 +37,7 @@ function useActive() {
  * Bottom tab bar — the primary navigation on phones, which is how most Aviro
  * farmers use the app. Hidden from lg upward, where the sidebar takes over.
  */
-export function TabBar({ alertCount = 0 }: { alertCount?: number }) {
+export function TabBar() {
   const isActive = useActive();
 
   return (
@@ -53,11 +53,6 @@ export function TabBar({ alertCount = 0 }: { alertCount?: number }) {
           >
             <span className="relative">
               <Icon name={t.icon} size={22} />
-              {t.icon === "more" && alertCount > 0 && (
-                <span className="absolute -top-0.5 -right-1.5 rounded-full bg-orange px-[5px] py-px text-[9px] leading-[1.2] font-medium text-white">
-                  {alertCount}
-                </span>
-              )}
             </span>
             <span>{t.label}</span>
           </Link>
@@ -68,7 +63,7 @@ export function TabBar({ alertCount = 0 }: { alertCount?: number }) {
 }
 
 /** Desktop counterpart — the owner console's persistent rail. */
-export function Sidebar({ alertCount = 0 }: { alertCount?: number }) {
+export function Sidebar() {
   const isActive = useActive();
 
   return (
@@ -94,11 +89,6 @@ export function Sidebar({ alertCount = 0 }: { alertCount?: number }) {
           >
             <Icon name={t.icon} size={20} />
             <span className="flex-1">{t.label}</span>
-            {t.icon === "more" && alertCount > 0 && (
-              <span className="rounded-full bg-orange px-1.5 py-px text-[10px] font-medium text-white">
-                {alertCount}
-              </span>
-            )}
           </Link>
         );
       })}

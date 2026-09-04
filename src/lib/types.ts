@@ -40,7 +40,8 @@ export interface Batch {
   totalFeed: number;
   totalCost: number;
   avgWeight: number;
-  fcr: number;
+  /** Null until the birds have enough mass for the ratio to mean anything. */
+  fcr: number | null;
   costPerBird: number;
   marketPricePerKg: number;
   projRevenue: number;

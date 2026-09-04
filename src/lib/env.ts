@@ -1,11 +1,18 @@
-// Environment configuration.
-//
-// Read through here rather than touching process.env directly: a missing or
-// malformed value fails at startup with a clear message, instead of surfacing
-// later as a confusing fetch error against "undefined/api/batches".
-//
-// NEXT_PUBLIC_* is inlined into the client bundle at build time, so it must be
-// referenced literally — process.env[name] would not be replaced.
+import "server-only";
+
+/**
+ * Environment configuration.
+ *
+ * Read through here rather than touching process.env directly: a missing or
+ * malformed value fails at startup with a clear message, instead of surfacing
+ * later as a confusing fetch against "undefined/api/batches".
+ *
+ * Note there is deliberately no NEXT_PUBLIC_ variable here. The browser never
+ * calls Django: every request goes through a Server Action or a route handler
+ * on this origin, which is what lets the session live in an httpOnly cookie.
+ * Keeping the API address server-side means it is not in the client bundle and
+ * does not have to be supplied as a build argument.
+ */
 
 function required(name: string, value: string | undefined): string {
   if (!value) {
@@ -21,21 +28,16 @@ function required(name: string, value: string | undefined): string {
   return value.replace(/\/$/, "");
 }
 
-/** Django API base URL as the browser calls it. Safe to use in client code. */
-export const API_URL = required("NEXT_PUBLIC_API_URL", process.env.NEXT_PUBLIC_API_URL);
+/** Where Django is, as this server reaches it. */
+export const API_URL = required("API_URL", process.env.API_URL);
 
 /**
- * Django API base URL as the server calls it. In production this can be an
- * internal address the public never reaches. Falls back to the public URL so a
- * single-host deployment needs no extra configuration.
+ * An address that never leaves the private network, when the platform offers
+ * one. Falls back to the public URL, so a single-host deployment needs no
+ * extra configuration.
  */
 export const API_INTERNAL_URL = process.env.API_INTERNAL_URL
   ? required("API_INTERNAL_URL", process.env.API_INTERNAL_URL)
   : API_URL;
 
 export const IS_PRODUCTION = process.env.NODE_ENV === "production";
-
-/** Server components and route handlers should call the internal address. */
-export function apiBase(): string {
-  return typeof window === "undefined" ? API_INTERNAL_URL : API_URL;
-}

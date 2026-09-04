@@ -1,0 +1,41 @@
+name: CI
+
+# Every push and every pull request. The point is that main is never in a state
+# nobody has checked.
+on:
+  push:
+    branches: [main, development]
+  pull_request:
+    branches: [main, development]
+
+jobs:
+  check:
+    name: Typecheck, lint, build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      # `npm install` rather than `npm ci`: the native optional dependencies
+      # (Tailwind oxide, lightningcss) cannot all be satisfied from a single
+      # lockfile across macOS and Linux, and developers work on both.
+      - run: npm install --no-audit --no-fund
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      # The build is where Next validates routes and generates types, so a
+      # broken href or a bad page signature fails here rather than in the app.
+      - name: Build
+        run: npm run build
+        env:
+          # A non-secret placeholder: the build only needs it to be a valid URL.
+          API_URL: http://localhost:8000/api

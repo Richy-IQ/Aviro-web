@@ -1,7 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+
+import { saveDailyLog } from "@/app/actions/farm";
+import { enqueue } from "@/lib/offline/queue";
 import { Icon } from "@/components/ui/icon";
 import { naira } from "@/lib/format";
 import type { Batch } from "@/lib/types";
@@ -9,6 +13,14 @@ import { BigNumDisplay, NumPad } from "./numpad";
 
 const KG_PER_BAG = 25;
 const CAUSES = ["Sudden death", "Disease symptoms", "Predator", "Other"];
+
+/** The API stores a code; the farmer picks a phrase. */
+const CAUSE_CODES: Record<string, string> = {
+  "Sudden death": "sudden",
+  "Disease symptoms": "disease",
+  Predator: "predator",
+  Other: "other",
+};
 const HEALTH_OPTIONS = [
   { v: "none", label: "Nothing today" },
   { v: "vaccine", label: "Gave a vaccine" },
@@ -34,8 +46,12 @@ interface LogData {
 }
 
 export function DailyLogFlow({ batch }: { batch: Batch }) {
+  const router = useRouter();
   const [step, setStep] = useState(0);
   const [saved, setSaved] = useState(false);
+  const [queued, setQueued] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [pending, startTransition] = useTransition();
   const [data, setData] = useState<LogData>({
     feedQty: "",
     feedUnit: "bags",
@@ -51,17 +67,76 @@ export function DailyLogFlow({ batch }: { batch: Batch }) {
     data.feedUnit === "bags" ? (Number(data.feedQty) || 0) * KG_PER_BAG : Number(data.feedQty) || 0;
   const deaths = Number(data.deaths) || 0;
 
+  function save() {
+    setError(null);
+
+    const loggedOn = new Intl.DateTimeFormat("en-CA", { timeZone: "Africa/Lagos" }).format(
+      new Date(),
+    );
+    const payload = {
+      logged_on: loggedOn,
+      feed_kg: String(feedKgToday),
+      deaths,
+      death_cause: data.cause ? (CAUSE_CODES[data.cause] ?? "other") : "",
+      health_activity: data.health,
+      other_cost: String(Number(data.expenses) || 0),
+    };
+
+    startTransition(async () => {
+      // A farmer in a pen with no bars must not lose the entry they just made,
+      // so an unreachable server means "keep it here", not "start again".
+      if (typeof navigator !== "undefined" && !navigator.onLine) {
+        await queueIt(payload, loggedOn);
+        return;
+      }
+
+      const result = await saveDailyLog(batch.id, payload);
+      if (result.ok) {
+        setSaved(true);
+        router.refresh();
+        return;
+      }
+
+      // Reaching the server and being told no is different from not reaching
+      // it at all. Only the second is worth queueing.
+      if (result.message?.includes("Could not reach")) {
+        await queueIt(payload, loggedOn);
+        return;
+      }
+      setError(result.message ?? "Could not save your log.");
+    });
+  }
+
+  async function queueIt(payload: Record<string, unknown>, loggedOn: string) {
+    try {
+      await enqueue({
+        batchId: batch.id,
+        batchName: batch.name,
+        loggedOn,
+        payload,
+      });
+      setQueued(true);
+      setSaved(true);
+    } catch {
+      setError("Could not save your log on this phone. Write the numbers down and try again.");
+    }
+  }
+
   if (saved) {
     return (
       <div className="mx-auto w-full max-w-2xl px-4 py-12 text-center">
         <div className="mx-auto mb-4 grid h-16 w-16 place-items-center rounded-[18px] bg-soft-mint text-teal">
           <Icon name="check" size={30} />
         </div>
-        <h1 className="h2">Logged for day {batch.day}</h1>
+        <h1 className="h2">
+          {queued ? `Saved on this phone` : `Logged for day ${batch.day}`}
+        </h1>
         <p className="caption mx-auto mt-2 max-w-[300px] leading-[1.55]">
           {feedKgToday.toLocaleString("en-NG")} kg of feed
-          {deaths > 0 ? ` and ${deaths} ${deaths === 1 ? "death" : "deaths"}` : ", no deaths"} recorded.
-          That&rsquo;s a {batch.streak + 1} day streak.
+          {deaths > 0 ? ` and ${deaths} ${deaths === 1 ? "death" : "deaths"}` : ", no deaths"}{" "}
+          {queued
+            ? "kept here. It will send on its own when you have signal again."
+            : `recorded. That's a ${batch.streak + 1} day streak.`}
         </p>
         <Link href={`/batches/${batch.id}`} className="av-btn primary mt-6">
           Back to {batch.name}
@@ -84,12 +159,18 @@ export function DailyLogFlow({ batch }: { batch: Batch }) {
           <ReviewRow label="Health" value={HEALTH_OPTIONS.find((h) => h.v === data.health)?.label ?? "—"} onEdit={() => setStep(2)} />
           <ReviewRow label="Other expenses" value={naira(expense)} onEdit={() => setStep(3)} />
         </div>
+        {error && <p className="av-err px-4">{error}</p>}
         <div className="flex gap-2 p-4">
           <button type="button" onClick={() => setStep(3)} className="av-btn ghost flex-1">
             Back
           </button>
-          <button type="button" onClick={() => setSaved(true)} className="av-btn primary flex-[2]">
-            <Icon name="check" size={16} stroke={2} /> Save log
+          <button
+            type="button"
+            onClick={save}
+            disabled={pending}
+            className="av-btn primary flex-[2]"
+          >
+            <Icon name="check" size={16} stroke={2} /> {pending ? "Saving…" : "Save log"}
           </button>
         </div>
       </div>
