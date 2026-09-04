@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import { ToastProvider } from "@/components/overlay/toast";
+import { ServiceWorker } from "@/components/pwa/service-worker";
 import { SystemThemeSync } from "@/components/settings/system-theme-sync";
 import { ThemeScript } from "@/components/settings/theme-script";
 import "./globals.css";
@@ -51,6 +52,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     >
       <body className="min-h-full">
         <ThemeScript />
+        <ServiceWorker />
         <SystemThemeSync />
         <ToastProvider>{children}</ToastProvider>
       </body>

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { signOut } from "@/app/actions/auth";
+import { clearCachedPages } from "@/components/pwa/service-worker";
 import { Sheet } from "@/components/overlay/sheet";
 import { Icon, type IconName } from "@/components/ui/icon";
 
@@ -65,7 +66,15 @@ export function AccountMenu({
           ))}
         </div>
 
-        <form action={signOut} className="mt-4">
+        {/* Clear this phone's cached pages first: the device may be shared,
+            and the next person must not find the last farmer's numbers. */}
+        <form
+          action={async () => {
+            await clearCachedPages();
+            await signOut();
+          }}
+          className="mt-4"
+        >
           <button type="submit" className="av-btn ghost full text-error">
             <Icon name="logout" size={16} /> Sign out
           </button>
