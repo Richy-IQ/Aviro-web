@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 
 import { requestCode, verifyCode } from "@/app/actions/auth";
+import { DemoCode } from "@/components/onboarding/demo-code";
 import { Icon, type IconName } from "@/components/ui/icon";
 import { Logo } from "@/components/ui/logo";
 import { isValidPhone, maskPhone, normalisePhone } from "@/lib/phone";
@@ -27,6 +28,7 @@ export function OnboardingFlow() {
   const [phone, setPhone] = useState("");
   const [code, setCode] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [demo, setDemo] = useState<{ code: string; notice?: string } | null>(null);
   const [resendIn, setResendIn] = useState(RESEND_SECONDS);
   const [pending, startTransition] = useTransition();
   const codeRef = useRef<HTMLInputElement>(null);
@@ -54,6 +56,11 @@ export function OnboardingFlow() {
         setError(result.message ?? "Could not send the code.");
         return;
       }
+      setDemo(
+        result.data?.demoCode
+          ? { code: result.data.demoCode, notice: result.data.demoNotice }
+          : null,
+      );
       setResendIn(RESEND_SECONDS);
       setStep("code");
     });
@@ -214,6 +221,8 @@ export function OnboardingFlow() {
               />
               {error && <div className="av-err">{error}</div>}
               {pending && <div className="av-help">Checking…</div>}
+
+              {demo && <DemoCode code={demo.code} notice={demo.notice} />}
 
               <div className="mt-6 flex gap-4">
                 {resendIn > 0 ? (
