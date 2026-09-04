@@ -1,0 +1,40 @@
+name: CI
+
+# Every push and every pull request. The point is that main is never in a state
+# nobody has checked.
+on:
+  push:
+    branches: [main, development]
+  pull_request:
+    branches: [main, development]
+
+jobs:
+  check:
+    name: Typecheck, lint, build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      # `npm ci` installs exactly the lockfile, which is what CI should test.
+      - run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      # The build is where Next validates routes and generates types, so a
+      # broken href or a bad page signature fails here rather than in the app.
+      - name: Build
+        run: npm run build
+        env:
+          # Non-secret placeholders: the build only needs these to be valid URLs.
+          NEXT_PUBLIC_API_URL: http://localhost:8000/api
+          API_INTERNAL_URL: http://localhost:8000/api
