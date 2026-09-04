@@ -1,21 +1,29 @@
 import { AccountMenu } from "./account-menu";
 import { AlertBell } from "./alert-bell";
-import { CURRENT_DAY } from "@/lib/current";
-import { alertsForDay, makeFarm } from "@/lib/farm-data";
+import { getCurrentFarm } from "@/lib/api/current-farm";
+import { api } from "@/lib/api/resources";
 
 /** The pair that sits in the corner of every tab-root screen. */
-export function HeaderActions() {
-  const farm = makeFarm(CURRENT_DAY);
-  const [batch] = farm.batches;
-  const count = alertsForDay(batch).length;
+export async function HeaderActions() {
+  const farm = await getCurrentFarm();
+  if (!farm) return null;
+
+  const [user, alerts] = await Promise.all([
+    api.me(),
+    api.alerts(farm.id).catch(() => []),
+  ]);
+
+  // Empty when there is no name yet; the avatar falls back to a person icon
+  // rather than showing two digits of their phone number.
+  const initials = `${user.first_name[0] ?? ""}${user.last_name[0] ?? ""}`.trim();
 
   return (
     <div className="flex items-center gap-1">
-      <AlertBell count={count} />
+      <AlertBell count={alerts.length} />
       <AccountMenu
-        initials={`${farm.farmer.first[0]}${farm.farmer.last[0]}`}
-        name={`${farm.farmer.first} ${farm.farmer.last}`}
-        farm={`${farm.farm.name} · ${farm.farm.location}`}
+        initials={initials.toUpperCase()}
+        name={user.display_name || user.phone}
+        farm={`${farm.name}${farm.location ? ` · ${farm.location}` : ""}`}
       />
     </div>
   );

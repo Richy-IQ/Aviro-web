@@ -1,9 +1,11 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
+
 import { HeaderActions } from "@/components/shell/header-actions";
 import { Icon, type IconName } from "@/components/ui/icon";
 import { TopBar } from "@/components/ui/top-bar";
-import { CURRENT_DAY } from "@/lib/current";
-import { makeFarm, PAST_CYCLE } from "@/lib/farm-data";
+import { getCurrentFarm } from "@/lib/api/current-farm";
+import { api } from "@/lib/api/resources";
 import { naira, nairaShort } from "@/lib/format";
 
 export const metadata = { title: "Money · Aviro" };
@@ -16,34 +18,52 @@ const LINKS: { href: string; label: string; icon: IconName; sub: string }[] = [
   { href: "/benchmark", label: "Benchmark", icon: "trophy", sub: "How you compare with farms like yours" },
 ];
 
-export default function MoneyPage() {
-  const farm = makeFarm(CURRENT_DAY);
-  const [current] = farm.batches;
+export default async function MoneyPage() {
+  const farm = await getCurrentFarm();
+  if (!farm) redirect("/setup");
+
+  const rows = await api.batches(farm.id);
+  const open = rows.filter((r) => r.batch.status === "active");
+  const closed = rows.filter((r) => r.batch.status === "closed");
+
+  const openProfit = open.reduce((sum, r) => sum + Number(r.metrics.projected_profit ?? 0), 0);
+  const openCost = open.reduce((sum, r) => sum + Number(r.metrics.total_cost), 0);
+  const leading = open[0];
 
   return (
     <div className="mx-auto w-full max-w-3xl pb-7">
       <TopBar title="Money" subtitle="What your farm is earning" right={<HeaderActions />} />
 
       <div className="p-4">
-        {/* The two numbers that answer "am I making money?" — closed, then open */}
-        <div className="rounded-card bg-teal p-4 text-white">
-          <div className="label" style={{ color: "rgba(255,255,255,.72)" }}>
-            Last cycle · {PAST_CYCLE.name}
+        {open.length > 0 ? (
+          <div className="rounded-card bg-teal p-4 text-white">
+            <div className="label" style={{ color: "rgba(255,255,255,.72)" }}>
+              Open cycles · projected
+            </div>
+            <div className="display num mt-1 text-[36px]">{nairaShort(openProfit)}</div>
+            <div className="mt-1 text-[13px]" style={{ color: "rgba(255,255,255,.8)" }}>
+              {leading?.metrics.sell_window_peaks && leading.metrics.optimal_sell_day
+                ? `Best around day ${leading.metrics.optimal_sell_day}. `
+                : ""}
+              Spent so far {naira(openCost)}.
+            </div>
           </div>
-          <div className="display num mt-1 text-[36px]">{nairaShort(PAST_CYCLE.grossProfit)}</div>
-          <div className="mt-1 text-[13px]" style={{ color: "rgba(255,255,255,.8)" }}>
-            {PAST_CYCLE.margin}% margin on {nairaShort(PAST_CYCLE.revenue)} revenue
+        ) : (
+          <div className="av-card">
+            <div className="label mb-1.5">Nothing running</div>
+            <p className="caption text-sm">Start a batch and your numbers will appear here.</p>
           </div>
-        </div>
+        )}
 
-        <div className="av-card mt-2.5">
-          <div className="label mb-1.5">This cycle · {current.name}, projected</div>
-          <div className="num text-[22px] font-medium">{nairaShort(current.projProfit)}</div>
-          <div className="caption mt-1 text-xs">
-            If you sell on day {current.optimalDay} at today&rsquo;s price. Cost so far{" "}
-            <span className="num">{naira(current.totalCost)}</span>.
+        {closed.length > 0 && (
+          <div className="av-card mt-2.5">
+            <div className="label mb-1.5">Closed cycles</div>
+            <div className="num text-[22px] font-medium">{closed.length}</div>
+            <div className="caption mt-1 text-xs">
+              Open a cycle report to see what each one earned.
+            </div>
           </div>
-        </div>
+        )}
 
         <div className="mt-6 overflow-hidden rounded-card border border-border">
           {LINKS.map((l, i) => (

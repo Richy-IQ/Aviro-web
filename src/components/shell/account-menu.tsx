@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { signOut } from "@/app/actions/auth";
 import { Sheet } from "@/components/overlay/sheet";
 import { Icon, type IconName } from "@/components/ui/icon";
 
@@ -19,7 +20,16 @@ const LINKS: { href: string; label: string; icon: IconName; sub: string }[] = [
  * than occupying a navigation tab. That frees the fourth tab for something a
  * farmer opens weekly instead of twice a year.
  */
-export function AccountMenu({ initials, name, farm }: { initials: string; name: string; farm: string }) {
+export function AccountMenu({
+  initials,
+  name,
+  farm,
+}: {
+  /** Empty when the farmer has not given a name yet. */
+  initials: string;
+  name: string;
+  farm: string;
+}) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -30,7 +40,7 @@ export function AccountMenu({ initials, name, farm }: { initials: string; name: 
         aria-label="Your account"
         className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-teal text-[13px] font-medium text-white"
       >
-        {initials}
+        {initials || <Icon name="user" size={18} />}
       </button>
 
       <Sheet open={open} onClose={() => setOpen(false)} title={name} subtitle={farm}>
@@ -54,6 +64,12 @@ export function AccountMenu({ initials, name, farm }: { initials: string; name: 
             </Link>
           ))}
         </div>
+
+        <form action={signOut} className="mt-4">
+          <button type="submit" className="av-btn ghost full text-error">
+            <Icon name="logout" size={16} /> Sign out
+          </button>
+        </form>
       </Sheet>
     </>
   );

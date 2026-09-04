@@ -1,7 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+
+import { recordSale } from "@/app/actions/farm";
 import { FieldLabel, NairaInput } from "@/components/form/fields";
 import { StepShell } from "@/components/form/step-shell";
 import { Icon } from "@/components/ui/icon";
@@ -35,8 +38,11 @@ interface SaleData {
 }
 
 export function RecordSaleFlow({ batch }: { batch: Batch }) {
+  const router = useRouter();
   const [step, setStep] = useState(0);
   const [done, setDone] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [pending, startTransition] = useTransition();
   const [data, setData] = useState<SaleData>({
     saleType: "full",
     birds: batch.alive,
@@ -48,6 +54,30 @@ export function RecordSaleFlow({ batch }: { batch: Batch }) {
   });
 
   const patch = (p: Partial<SaleData>) => setData((d) => ({ ...d, ...p }));
+
+  function submit() {
+    setError(null);
+    startTransition(async () => {
+      const result = await recordSale(batch.id, {
+        sold_on: new Intl.DateTimeFormat("en-CA", { timeZone: "Africa/Lagos" }).format(new Date()),
+        kind: data.saleType,
+        birds: data.birds,
+        average_weight_kg: String(data.weight),
+        revenue: String(data.revenue),
+        buyer_type: data.buyerType,
+        buyer_name: data.buyerName,
+        note: data.notes,
+      });
+      if (!result.ok) {
+        // The API's message is specific — "You have 460 birds alive in Batch B,
+        // so you cannot sell 9999" — so show it rather than a generic one.
+        setError(result.message ?? "Could not record the sale.");
+        return;
+      }
+      setDone(true);
+      router.refresh();
+    });
+  }
 
   if (done) {
     const profit = data.revenue - batch.totalCost;
@@ -89,7 +119,9 @@ export function RecordSaleFlow({ batch }: { batch: Batch }) {
               </div>
               <div className="av-metric">
                 <div className="av-metric-l">FCR</div>
-                <div className="av-metric-v num">{batch.fcr.toFixed(2)}</div>
+                <div className="av-metric-v num">
+                  {batch.fcr != null ? batch.fcr.toFixed(2) : "—"}
+                </div>
               </div>
               <div className="av-metric">
                 <div className="av-metric-l">Mortality</div>
@@ -120,9 +152,11 @@ export function RecordSaleFlow({ batch }: { batch: Batch }) {
       total={TOTAL}
       title={TITLES[step]}
       onBack={step > 0 ? () => setStep((s) => s - 1) : undefined}
-      nextLabel={step === TOTAL - 1 ? "Record sale" : "Next"}
-      onNext={() => (step === TOTAL - 1 ? setDone(true) : setStep((s) => s + 1))}
+      nextLabel={step === TOTAL - 1 ? (pending ? "Recording…" : "Record sale") : "Next"}
+      nextDisabled={pending}
+      onNext={() => (step === TOTAL - 1 ? submit() : setStep((s) => s + 1))}
     >
+      {error && <p className="av-err mb-3">{error}</p>}
       {step === 0 && (
         <div role="radiogroup" aria-label="Sale type">
           {SALE_TYPES.map((o) => {

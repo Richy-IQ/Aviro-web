@@ -1,27 +1,37 @@
+import { redirect } from "next/navigation";
+
 import { BatchCard } from "@/components/home/batch-card";
-import { Empty } from "@/components/ui/empty";
 import { HeaderActions } from "@/components/shell/header-actions";
+import { Empty } from "@/components/ui/empty";
 import { Fab } from "@/components/ui/fab";
 import { TopBar } from "@/components/ui/top-bar";
-import { CURRENT_DAY } from "@/lib/current";
-import { makeFarm } from "@/lib/farm-data";
+import { toBatch } from "@/lib/api/adapters";
+import { getCurrentFarm } from "@/lib/api/current-farm";
+import { api } from "@/lib/api/resources";
 
 export const metadata = { title: "Batches · Aviro" };
 
-export default function BatchesPage() {
-  const farm = makeFarm(CURRENT_DAY);
-  const [current] = farm.batches;
-  const totalBirds = farm.batches.reduce((sum, b) => sum + b.alive, 0);
+export default async function BatchesPage() {
+  const farm = await getCurrentFarm();
+  if (!farm) redirect("/setup");
+
+  const rows = await api.batches(farm.id);
+  const batches = rows.map((row) => toBatch(row.batch, row.metrics));
+  const totalBirds = batches.reduce((sum, b) => sum + b.alive, 0);
 
   return (
     <div className="mx-auto w-full max-w-5xl pb-28 lg:pb-10">
       <TopBar
         title="Batches"
-        subtitle={`${farm.batches.length} active · ${totalBirds.toLocaleString("en-NG")} birds`}
+        subtitle={
+          batches.length
+            ? `${batches.length} active · ${totalBirds.toLocaleString("en-NG")} birds`
+            : undefined
+        }
         right={<HeaderActions />}
       />
 
-      {farm.batches.length === 0 ? (
+      {batches.length === 0 ? (
         <Empty
           icon="farm"
           title="No batches yet"
@@ -29,8 +39,8 @@ export default function BatchesPage() {
         />
       ) : (
         <div className="px-4 pt-4 lg:grid lg:grid-cols-2 lg:gap-x-3 xl:grid-cols-3">
-          {farm.batches.map((b) => (
-            <BatchCard key={b.id} batch={b} primary={b.id === current.id} />
+          {batches.map((b, i) => (
+            <BatchCard key={b.id} batch={b} primary={i === 0} />
           ))}
         </div>
       )}

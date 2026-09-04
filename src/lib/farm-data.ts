@@ -253,7 +253,7 @@ export function alertsForDay(b: Batch): Alert[] {
 /** Percentile bands come from aggregated farms; `value` is this farm's number. */
 export function benchmark(b: Batch): BenchmarkRow[] {
   return [
-    { metric: "Feed conversion (FCR)", value: b.fcr, unit: "", p25: 1.42, p50: 1.55, p75: 1.68, lowerIsBetter: true },
+    { metric: "Feed conversion (FCR)", value: b.fcr ?? 0, unit: "", p25: 1.42, p50: 1.55, p75: 1.68, lowerIsBetter: true },
     { metric: "Mortality", value: b.mortPct, unit: "%", p25: 3.2, p50: 4.8, p75: 7.1, lowerIsBetter: true },
     { metric: "Cost per bird", value: b.costPerBird, unit: "₦", p25: 1850, p50: 2100, p75: 2480, lowerIsBetter: true },
     { metric: "Average bird weight", value: b.avgWeight, unit: "kg", p25: 0.95, p50: 1.10, p75: 1.25, lowerIsBetter: false },

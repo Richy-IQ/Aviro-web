@@ -1,57 +1,78 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
+
 import { AlertRow } from "@/components/home/alert-row";
 import { Greeting } from "@/components/home/greeting";
 import { BatchCard } from "@/components/home/batch-card";
 import { TodayCard } from "@/components/guide/today-card";
+import { HeaderActions } from "@/components/shell/header-actions";
+import { Empty } from "@/components/ui/empty";
 import { Fab } from "@/components/ui/fab";
 import { Icon } from "@/components/ui/icon";
-import { HeaderActions } from "@/components/shell/header-actions";
 import { Logo } from "@/components/ui/logo";
-import { CURRENT_DAY, greetingFor } from "@/lib/current";
-import { alertsForDay, makeFarm } from "@/lib/farm-data";
+import { toBatch } from "@/lib/api/adapters";
+import { getCurrentFarm } from "@/lib/api/current-farm";
+import { api } from "@/lib/api/resources";
+import { greetingFor } from "@/lib/current";
 
-export default function HomePage() {
-  const farm = makeFarm(CURRENT_DAY);
-  const [current] = farm.batches;
-  const alerts = alertsForDay(current);
-  const greeting = greetingFor();
+export default async function HomePage() {
+  const farm = await getCurrentFarm();
+  // A verified farmer with no farm yet has nothing to show; send them to set up.
+  if (!farm) redirect("/setup");
+
+  const [rows, alerts, user] = await Promise.all([
+    api.batches(farm.id),
+    api.alerts(farm.id),
+    api.me(),
+  ]);
+
+  const batches = rows.map((row) => toBatch(row.batch, row.metrics));
+  const active = batches.filter((b) => b.status !== undefined);
+  const current = active[0];
+  const firstName = user.first_name || "there";
 
   return (
     <div className="mx-auto w-full max-w-5xl pb-28 lg:pb-10">
-      {/* Compact header — the sidebar already carries the logo on desktop */}
       <div className="flex items-center justify-between border-b border-border bg-surface px-4 pt-2 pb-1 lg:hidden">
         <Logo size={26} />
         <HeaderActions />
       </div>
 
       <div className="px-4 pt-5 pb-2">
-        <Greeting name={farm.farmer.first} fallback={greeting} />
-        <h1 className="h1 mt-0.5 text-2xl">{farm.farm.name}</h1>
+        <Greeting name={firstName} fallback={greetingFor()} />
+        <h1 className="h1 mt-0.5 text-2xl">{farm.name}</h1>
       </div>
 
-      <div className="px-4 pt-2 pb-1">
-        <TodayCard day={current.day} type={current.type} />
-      </div>
+      {current && (
+        <div className="px-4 pt-2 pb-1">
+          <TodayCard day={current.day} type={current.type} />
+        </div>
+      )}
 
       <div className="flex items-center justify-between px-4 pt-5 pb-2">
-        <span className="label">Your batches · {farm.batches.length}</span>
-        <Link className="av-link" href="/batches">
-          See all
-        </Link>
+        <span className="label">Your batches · {batches.length}</span>
+        {batches.length > 0 && (
+          <Link className="av-link" href="/batches">
+            See all
+          </Link>
+        )}
       </div>
 
-      <div className="px-4 lg:grid lg:grid-cols-2 lg:gap-x-3 xl:grid-cols-3">
-        {farm.batches.map((b) => (
-          <BatchCard key={b.id} batch={b} primary={b.id === current.id} />
-        ))}
-      </div>
-
-      {/* Starting a batch sits with the batches, not buried at the foot of the page */}
-      <div className="px-4 pt-1">
-        <Link href="/batches/new" className="av-btn primary full">
-          <Icon name="plus" size={18} stroke={2} /> Start a new batch
-        </Link>
-      </div>
+      {batches.length === 0 ? (
+        <div className="px-4">
+          <Empty
+            icon="farm"
+            title="No batches yet"
+            body="A batch is one set of birds you raise together. Start one and Aviro tracks the cost, feed and profit for you."
+          />
+        </div>
+      ) : (
+        <div className="px-4 lg:grid lg:grid-cols-2 lg:gap-x-3 xl:grid-cols-3">
+          {batches.map((b) => (
+            <BatchCard key={b.id} batch={b} primary={b.id === current?.id} />
+          ))}
+        </div>
+      )}
 
       <div className="flex items-center justify-between px-4 pt-6 pb-2">
         <span className="label">Needs your attention</span>
@@ -74,11 +95,25 @@ export default function HomePage() {
             </div>
           </div>
         ) : (
-          alerts.slice(0, 3).map((a) => <AlertRow key={a.id} alert={a} compact />)
+          alerts.slice(0, 3).map((a) => (
+            <AlertRow
+              key={a.id}
+              alert={{
+                id: a.id,
+                kind: a.kind,
+                title: a.title,
+                body: a.body,
+                cta: a.action,
+                time: "",
+                batch: a.batch_name,
+              }}
+              compact
+            />
+          ))
         )}
       </div>
 
-      <Fab href="/log" label="Log today" />
+      {current && <Fab href="/log" label="Log today" />}
     </div>
   );
 }

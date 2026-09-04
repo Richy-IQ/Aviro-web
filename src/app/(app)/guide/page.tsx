@@ -4,8 +4,8 @@ import { CycleTimeline } from "@/components/guide/cycle-timeline";
 import { HeaderActions } from "@/components/shell/header-actions";
 import { Icon } from "@/components/ui/icon";
 import { TopBar } from "@/components/ui/top-bar";
-import { CURRENT_DAY } from "@/lib/current";
-import { makeFarm } from "@/lib/farm-data";
+import { getCurrentFarm } from "@/lib/api/current-farm";
+import { api } from "@/lib/api/resources";
 import { GUIDES, GUIDE_TYPES, guideFor, phaseForDay } from "@/lib/guide";
 import type { BirdType } from "@/lib/types";
 
@@ -17,16 +17,23 @@ export const metadata = {
 
 export default async function GuidePage({ searchParams }: PageProps<"/guide">) {
   const params = await searchParams;
-  const farm = makeFarm(CURRENT_DAY);
-  const [batch] = farm.batches;
 
-  const raw = typeof params.bird === "string" ? params.bird : batch.type;
+  // The guide is readable without an account — it is the best reason to install
+  // Aviro. When there is a farm, it opens on the bird the farmer is raising.
+  const farm = await getCurrentFarm();
+  const rows = farm ? await api.batches(farm.id).catch(() => []) : [];
+  const open = rows.find((r) => r.batch.status === "active");
+
+  const raw = typeof params.bird === "string" ? params.bird : (open?.batch.bird_type ?? "broiler");
   const type = (GUIDE_TYPES.includes(raw as never) ? raw : "broiler") as Exclude<BirdType, "mixed">;
   const guide = GUIDES[type];
 
   // Only mark "you are here" when the guide shown matches the batch in hand.
-  const showsCurrentBatch = type === guideFor(batch.type).type;
-  const currentPhase = showsCurrentBatch ? phaseForDay(batch.day, batch.type) : null;
+  const showsCurrentBatch = open ? type === guideFor(open.batch.bird_type).type : false;
+  const currentPhase =
+    open && showsCurrentBatch
+      ? phaseForDay(open.metrics.day_in_cycle, open.batch.bird_type)
+      : null;
 
   return (
     <div className="mx-auto w-full max-w-3xl pb-7">
@@ -63,7 +70,10 @@ export default async function GuidePage({ searchParams }: PageProps<"/guide">) {
           <p className="mt-2 text-[15px] leading-[1.6] text-slate-2">{guide.summary}</p>
 
           <div className="mt-4">
-            <CycleTimeline guide={guide} currentDay={showsCurrentBatch ? batch.day : undefined} />
+            <CycleTimeline
+              guide={guide}
+              currentDay={open && showsCurrentBatch ? open.metrics.day_in_cycle : undefined}
+            />
           </div>
 
           <div className="mt-3 rounded-metric bg-teal-haze p-3">

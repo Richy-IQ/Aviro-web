@@ -1,7 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+
+import { createBatch } from "@/app/actions/farm";
 import { ChoiceCard, FieldLabel, NairaInput, RadioRow, Select } from "@/components/form/fields";
 import { StepShell } from "@/components/form/step-shell";
 import { Icon } from "@/components/ui/icon";
@@ -35,8 +38,11 @@ function today() {
 }
 
 export function NewBatchFlow() {
+  const router = useRouter();
   const [step, setStep] = useState(0);
   const [created, setCreated] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [pending, startTransition] = useTransition();
   const [data, setData] = useState<NewBatch>({
     name: "Batch C",
     type: "broiler",
@@ -51,6 +57,27 @@ export function NewBatchFlow() {
 
   const patch = (p: Partial<NewBatch>) => setData((d) => ({ ...d, ...p }));
   const capital = data.stocked * data.costPerBird + data.transportCost;
+
+  function submit() {
+    setError(null);
+    startTransition(async () => {
+      const result = await createBatch({
+        name: data.name.trim() || "Batch A",
+        bird_type: data.type,
+        started_on: data.dateStocked,
+        stocked: data.stocked,
+        cost_per_bird: String(data.costPerBird),
+        transport_cost: String(data.transportCost),
+        supplier: data.supplier,
+      });
+      if (!result.ok) {
+        setError(result.message ?? "Could not create the batch.");
+        return;
+      }
+      setCreated(true);
+      router.refresh();
+    });
+  }
 
   if (created) {
     return (
@@ -96,10 +123,12 @@ export function NewBatchFlow() {
       title={TITLES[step]}
       subtitle={step === 3 ? "Optional. Helpful if you have multiple pens." : undefined}
       onBack={step > 0 ? () => setStep((s) => s - 1) : undefined}
-      onSkip={step === 3 ? () => setCreated(true) : undefined}
-      nextLabel={step === 3 ? "Create batch" : "Next"}
-      onNext={() => (step === 3 ? setCreated(true) : setStep((s) => s + 1))}
+      onSkip={step === 3 ? submit : undefined}
+      nextLabel={step === 3 ? (pending ? "Creating…" : "Create batch") : "Next"}
+      nextDisabled={pending}
+      onNext={() => (step === 3 ? submit() : setStep((s) => s + 1))}
     >
+      {error && <p className="av-err mb-3">{error}</p>}
       {step === 0 && (
         <>
           <FieldLabel htmlFor="batch-name">Batch name</FieldLabel>

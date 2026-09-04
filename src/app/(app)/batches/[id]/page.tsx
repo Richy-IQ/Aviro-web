@@ -5,16 +5,12 @@ import { Explain } from "@/components/ui/explain";
 import { SellChart } from "@/components/batch/sell-chart";
 import { Icon } from "@/components/ui/icon";
 import { TopBar } from "@/components/ui/top-bar";
-import { CURRENT_DAY } from "@/lib/current";
-import { makeFarm } from "@/lib/farm-data";
+import { toBatch } from "@/lib/api/adapters";
+import { getCurrentFarm } from "@/lib/api/current-farm";
+import { api } from "@/lib/api/resources";
 import { cycleDaysFor, guideFor } from "@/lib/guide";
 import { naira, nairaShort } from "@/lib/format";
 import type { Batch } from "@/lib/types";
-
-/** Pre-render every batch at build time — these pages are pure data. */
-export function generateStaticParams() {
-  return makeFarm(CURRENT_DAY).batches.map((b) => ({ id: b.id }));
-}
 
 const HERO_BG: Record<Batch["status"], string> = {
   "needs-attention": "var(--error-soft)",
@@ -39,15 +35,21 @@ const STATUS_LABEL: Record<Batch["status"], string> = {
 
 export default async function BatchDetailPage({ params }: PageProps<"/batches/[id]">) {
   const { id } = await params;
-  const farm = makeFarm(CURRENT_DAY);
-  const batch = farm.batches.find((b) => b.id === id);
-  if (!batch) notFound();
+  const farm = await getCurrentFarm();
+  if (!farm) notFound();
 
-  // Only the focused batch carries a full day-by-day history in the fixture.
-  const full = "days" in batch ? batch : null;
+  const [detail, logs] = await Promise.all([
+    api.batch(farm.id, id).catch(() => null),
+    api.logs(farm.id, id).catch(() => []),
+  ]);
+  if (!detail) notFound();
+
+  const batch = toBatch(detail.batch, detail.metrics);
+  const metrics = detail.metrics;
+  const full = batch;
+  const last7 = logs.slice(0, 7);
   const cycleDays = cycleDaysFor(batch.type);
   const guide = guideFor(batch.type);
-  const last7 = full ? full.days.slice(-7).reverse() : [];
 
   return (
     <div className="mx-auto w-full max-w-3xl">
@@ -145,7 +147,14 @@ export default async function BatchDetailPage({ params }: PageProps<"/batches/[i
                   <div className="caption">Best day to sell</div>
                   <div className="h3 mt-0.5 flex items-center gap-2">
                     <span>
-                      Day <span className="num">{full.optimalDay}</span> · {nairaShort(full.projProfit)} profit
+                      {metrics.sell_window_peaks ? (
+                        <>
+                          Day <span className="num">{full.optimalDay}</span> ·{" "}
+                          {nairaShort(full.projProfit)} profit
+                        </>
+                      ) : (
+                        <>Still rising · {nairaShort(full.projProfit)} today</>
+                      )}
                     </span>
                     <Explain term="sellWindow" />
                   </div>
@@ -158,27 +167,29 @@ export default async function BatchDetailPage({ params }: PageProps<"/batches/[i
             <div className="av-card mt-2 mb-4 p-0">
               {last7.map((d, i) => (
                 <div
-                  key={d.day}
+                  key={d.id}
                   className="flex items-center gap-3 px-3.5 py-3"
                   style={{ borderTop: i ? "1px solid var(--border)" : "none" }}
                 >
-                  <div className="num caption w-9 font-medium">day {d.day}</div>
+                  <div className="num caption w-9 font-medium">day {d.day_in_cycle}</div>
                   <div className="flex flex-1 items-center gap-3 text-xs text-slate-2">
                     <span className="inline-flex items-center gap-1">
                       <Icon name="feed" size={12} style={{ color: "var(--av-teal)" }} />
-                      <span className="num">{d.feedKg}</span>kg
+                      <span className="num">{Number(d.feed_kg)}</span>kg
                     </span>
                     <span
                       className="inline-flex items-center gap-1"
-                      style={{ color: d.died > 5 ? "var(--error)" : "inherit" }}
+                      style={{ color: d.deaths > 5 ? "var(--error)" : "inherit" }}
                     >
                       <Icon name="skull" size={12} />
-                      <span className="num">{d.died}</span>
+                      <span className="num">{d.deaths}</span>
                     </span>
-                    {d.medsCost > 0 && <Icon name="pill" size={12} style={{ color: "var(--warning)" }} />}
+                    {Number(d.meds_cost) > 0 && (
+                      <Icon name="pill" size={12} style={{ color: "var(--warning)" }} />
+                    )}
                   </div>
                   <span className="num text-xs text-slate-ink">
-                    {nairaShort(d.feedCost + d.medsCost + d.miscCost)}
+                    {nairaShort(Number(d.total_cost))}
                   </span>
                 </div>
               ))}

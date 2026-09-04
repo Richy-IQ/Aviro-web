@@ -1,7 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+
+import { saveDailyLog } from "@/app/actions/farm";
 import { Icon } from "@/components/ui/icon";
 import { naira } from "@/lib/format";
 import type { Batch } from "@/lib/types";
@@ -9,6 +12,14 @@ import { BigNumDisplay, NumPad } from "./numpad";
 
 const KG_PER_BAG = 25;
 const CAUSES = ["Sudden death", "Disease symptoms", "Predator", "Other"];
+
+/** The API stores a code; the farmer picks a phrase. */
+const CAUSE_CODES: Record<string, string> = {
+  "Sudden death": "sudden",
+  "Disease symptoms": "disease",
+  Predator: "predator",
+  Other: "other",
+};
 const HEALTH_OPTIONS = [
   { v: "none", label: "Nothing today" },
   { v: "vaccine", label: "Gave a vaccine" },
@@ -34,8 +45,11 @@ interface LogData {
 }
 
 export function DailyLogFlow({ batch }: { batch: Batch }) {
+  const router = useRouter();
   const [step, setStep] = useState(0);
   const [saved, setSaved] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [pending, startTransition] = useTransition();
   const [data, setData] = useState<LogData>({
     feedQty: "",
     feedUnit: "bags",
@@ -50,6 +64,27 @@ export function DailyLogFlow({ batch }: { batch: Batch }) {
   const feedKgToday =
     data.feedUnit === "bags" ? (Number(data.feedQty) || 0) * KG_PER_BAG : Number(data.feedQty) || 0;
   const deaths = Number(data.deaths) || 0;
+
+  function save() {
+    setError(null);
+    startTransition(async () => {
+      const result = await saveDailyLog(batch.id, {
+        // Today in Lagos, which is where the farmer is standing.
+        logged_on: new Intl.DateTimeFormat("en-CA", { timeZone: "Africa/Lagos" }).format(new Date()),
+        feed_kg: String(feedKgToday),
+        deaths,
+        death_cause: data.cause ? CAUSE_CODES[data.cause] ?? "other" : "",
+        health_activity: data.health,
+        other_cost: String(Number(data.expenses) || 0),
+      });
+      if (!result.ok) {
+        setError(result.message ?? "Could not save your log.");
+        return;
+      }
+      setSaved(true);
+      router.refresh();
+    });
+  }
 
   if (saved) {
     return (
@@ -84,12 +119,18 @@ export function DailyLogFlow({ batch }: { batch: Batch }) {
           <ReviewRow label="Health" value={HEALTH_OPTIONS.find((h) => h.v === data.health)?.label ?? "—"} onEdit={() => setStep(2)} />
           <ReviewRow label="Other expenses" value={naira(expense)} onEdit={() => setStep(3)} />
         </div>
+        {error && <p className="av-err px-4">{error}</p>}
         <div className="flex gap-2 p-4">
           <button type="button" onClick={() => setStep(3)} className="av-btn ghost flex-1">
             Back
           </button>
-          <button type="button" onClick={() => setSaved(true)} className="av-btn primary flex-[2]">
-            <Icon name="check" size={16} stroke={2} /> Save log
+          <button
+            type="button"
+            onClick={save}
+            disabled={pending}
+            className="av-btn primary flex-[2]"
+          >
+            <Icon name="check" size={16} stroke={2} /> {pending ? "Saving…" : "Save log"}
           </button>
         </div>
       </div>

@@ -1,7 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+
+import { requestCode, verifyCode } from "@/app/actions/auth";
 import { Icon, type IconName } from "@/components/ui/icon";
 import { Logo } from "@/components/ui/logo";
 import { isValidPhone, maskPhone, normalisePhone } from "@/lib/phone";
@@ -11,7 +13,6 @@ type Step = "splash" | "phone" | "code";
 const SPLASH_MS = 1600;
 const RESEND_SECONDS = 28;
 const CODE_LENGTH = 6;
-const DEMO_CODE = "260411";
 
 /** Three lines instead of three carousel screens — same promise, no extra taps. */
 const VALUE: { icon: IconName; text: string }[] = [
@@ -25,8 +26,9 @@ export function OnboardingFlow() {
   const [step, setStep] = useState<Step>("splash");
   const [phone, setPhone] = useState("");
   const [code, setCode] = useState("");
-  const [error, setError] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [resendIn, setResendIn] = useState(RESEND_SECONDS);
+  const [pending, startTransition] = useTransition();
   const codeRef = useRef<HTMLInputElement>(null);
 
   const national = normalisePhone(phone);
@@ -42,6 +44,39 @@ export function OnboardingFlow() {
     const t = setTimeout(() => setResendIn((x) => x - 1), 1000);
     return () => clearTimeout(t);
   }, [step, resendIn]);
+
+  function send() {
+    if (!national) return;
+    setError(null);
+    startTransition(async () => {
+      const result = await requestCode(national!);
+      if (!result.ok) {
+        setError(result.message ?? "Could not send the code.");
+        return;
+      }
+      setResendIn(RESEND_SECONDS);
+      setStep("code");
+    });
+  }
+
+  function submitCode(value: string) {
+    const digits = value.replace(/\D/g, "").slice(0, CODE_LENGTH);
+    setCode(digits);
+    setError(null);
+    if (digits.length < CODE_LENGTH || !national) return;
+
+    startTransition(async () => {
+      const result = await verifyCode(national!, digits);
+      if (!result.ok) {
+        setError(result.message ?? "That code is not correct.");
+        return;
+      }
+      // A first-time farmer goes straight to setting up their farm; a
+      // returning one goes home.
+      router.push(result.data?.isNewAccount ? "/setup" : "/");
+      router.refresh();
+    });
+  }
 
   /**
    * Web OTP: on Android Chrome the browser reads the code straight out of the
@@ -64,22 +99,6 @@ export function OnboardingFlow() {
     return () => ac.abort();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [step]);
-
-  function submitCode(value: string) {
-    const digits = value.replace(/\D/g, "").slice(0, CODE_LENGTH);
-    setCode(digits);
-    if (digits.length < CODE_LENGTH) {
-      setError(false);
-      return;
-    }
-    if (digits === DEMO_CODE) {
-      // Straight to the thing they came for. Name, farm and location are
-      // collected later, where each one actually changes an answer.
-      router.push("/batches/new");
-    } else {
-      setError(true);
-    }
-  }
 
   if (step === "splash") {
     return (
@@ -124,7 +143,7 @@ export function OnboardingFlow() {
                   value={phone}
                   onChange={(e) => setPhone(e.target.value.replace(/[^\d +]/g, "").slice(0, 17))}
                   onKeyDown={(e) => {
-                    if (e.key === "Enter" && isValidPhone(phone)) setStep("code");
+                    if (e.key === "Enter" && isValidPhone(phone)) send();
                   }}
                   placeholder="803 412 9087"
                 />
@@ -150,16 +169,14 @@ export function OnboardingFlow() {
               </ul>
             </div>
 
+            {error && <p className="av-err mb-2">{error}</p>}
             <button
               type="button"
               className="av-btn primary full"
-              disabled={!national}
-              onClick={() => {
-                setResendIn(RESEND_SECONDS);
-                setStep("code");
-              }}
+              disabled={!national || pending}
+              onClick={send}
             >
-              Send code
+              {pending ? "Sending…" : "Send code"}
             </button>
           </>
         ) : (
@@ -187,20 +204,22 @@ export function OnboardingFlow() {
                 inputMode="numeric"
                 autoComplete="one-time-code"
                 aria-label="6-digit code"
-                aria-invalid={error}
+                aria-invalid={error !== null}
                 maxLength={CODE_LENGTH}
                 value={code}
                 autoFocus
                 onChange={(e) => submitCode(e.target.value)}
+                disabled={pending}
                 style={error ? { borderColor: "var(--error)", borderWidth: 2 } : undefined}
               />
-              {error && <div className="av-err">That code didn&rsquo;t match. Check and try again.</div>}
+              {error && <div className="av-err">{error}</div>}
+              {pending && <div className="av-help">Checking…</div>}
 
               <div className="mt-6 flex gap-4">
                 {resendIn > 0 ? (
                   <span className="caption">Resend in 0:{String(resendIn).padStart(2, "0")}</span>
                 ) : (
-                  <button type="button" className="av-link" onClick={() => setResendIn(RESEND_SECONDS)}>
+                  <button type="button" className="av-link" onClick={send}>
                     Resend code
                   </button>
                 )}
@@ -209,13 +228,6 @@ export function OnboardingFlow() {
                 </button>
               </div>
 
-              <button
-                type="button"
-                className="av-btn tertiary sm mt-6"
-                onClick={() => submitCode(DEMO_CODE)}
-              >
-                Demo: fill the code
-              </button>
             </div>
           </>
         )}
