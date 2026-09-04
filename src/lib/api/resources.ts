@@ -9,6 +9,7 @@ import type {
   ApiDailyLog,
   ApiFarm,
   ApiMetrics,
+  ApiReports,
   ApiUser,
   ApiVaccination,
 } from "./types";
@@ -70,6 +71,9 @@ export const api = {
     }),
 
   alerts: (farmId: string) => apiFetch<ApiAlert[]>(`/v1/farms/${farmId}/alerts/`),
+
+  reports: (farmId: string, period = "12-mo") =>
+    apiFetch<ApiReports>(`/v1/farms/${farmId}/reports/?period=${period}`),
 
   benchmark: (farmId: string, batchId: string) =>
     apiFetch<ApiBenchmark>(`/v1/farms/${farmId}/batches/${batchId}/benchmark/`),

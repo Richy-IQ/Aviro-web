@@ -131,3 +131,50 @@ export interface ApiBenchmark {
     beats_median: boolean;
   }[];
 }
+
+export interface ApiCostLine {
+  category: string;
+  amount: string;
+  pct_of_revenue: string;
+}
+
+export interface ApiCycleReport {
+  batch_id: string;
+  name: string;
+  breed: string;
+  bird_type: string;
+  started_on: string;
+  closed_on: string | null;
+  days: number;
+  /** False means these figures are a projection, not money received. */
+  is_closed: boolean;
+  stocked: number;
+  sold: number;
+  mortality_pct: string;
+  average_weight_kg: string | null;
+  feed_conversion: string | null;
+  revenue: string;
+  costs: ApiCostLine[];
+  total_cost: string;
+  gross_profit: string;
+  margin: string;
+  cost_per_bird: string;
+  revenue_per_bird: string;
+  profit_per_bird: string;
+  cost_per_kg: string | null;
+  price_per_kg: string | null;
+  insights: string[];
+}
+
+export interface ApiReports {
+  period: string;
+  cycles: ApiCycleReport[];
+  totals: {
+    revenue: string;
+    total_cost: string;
+    gross_profit: string;
+    margin: string;
+    birds_sold: number;
+    closed_cycles: number;
+  };
+}
