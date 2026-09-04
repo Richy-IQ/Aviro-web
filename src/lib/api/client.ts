@@ -1,6 +1,6 @@
 import "server-only";
 
-import { API_INTERNAL_URL } from "@/lib/env";
+import { apiUrl } from "@/lib/env";
 
 import { ApiError, ApiUnreachable } from "./errors";
 import { getAccessToken, getRefreshToken, setSession } from "./session";
@@ -52,7 +52,7 @@ async function send(path: string, options: RequestOptions): Promise<Response> {
   }
 
   try {
-    return await fetch(`${API_INTERNAL_URL}${path}`, {
+    return await fetch(`${apiUrl()}${path}`, {
       method,
       headers,
       body: body === undefined ? undefined : JSON.stringify(body),
@@ -96,7 +96,7 @@ async function tryRefresh(): Promise<boolean> {
   if (!refresh) return false;
 
   try {
-    const response = await fetch(`${API_INTERNAL_URL}/v1/auth/refresh/`, {
+    const response = await fetch(`${apiUrl()}/v1/auth/refresh/`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ refresh }),
