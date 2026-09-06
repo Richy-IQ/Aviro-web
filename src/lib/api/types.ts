@@ -178,3 +178,59 @@ export interface ApiReports {
     closed_cycles: number;
   };
 }
+
+export interface ApiPhasePlan {
+  name: string;
+  day_from: number;
+  day_to: number;
+  starts_on: string;
+  ends_on: string;
+  days: number;
+  grams_per_bird_start: number;
+  grams_per_bird_end: number;
+  total_kg: string;
+  bags: string;
+  estimated_cost: string;
+  notes: string;
+}
+
+export interface ApiWeekPlan {
+  week: number;
+  day_from: number;
+  day_to: number;
+  starts_on: string;
+  feed_name: string;
+  total_kg: string;
+  bags: string;
+}
+
+export interface ApiPlannedVaccination {
+  day: number;
+  due_on: string;
+  name: string;
+  route: string;
+  notes: string;
+}
+
+export interface ApiCyclePlan {
+  bird_type: string;
+  bird_type_label: string;
+  stocked: number;
+  started_on: string;
+  ends_on: string;
+  cycle_days: number;
+  cycle_goal: string;
+  phases: ApiPhasePlan[];
+  weeks: ApiWeekPlan[];
+  vaccinations: ApiPlannedVaccination[];
+  total_feed_kg: string;
+  total_bags: string;
+  feed_per_bird_kg: string;
+  estimated_feed_cost: string;
+  estimated_chick_cost: string;
+  estimated_total_cost: string;
+  estimated_cost_per_bird: string;
+  feed_price_per_kg: string;
+  /** These are projections. The UI must not present them as certainties. */
+  caveat: string;
+}

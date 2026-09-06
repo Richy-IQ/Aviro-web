@@ -6,6 +6,7 @@ import type {
   ApiBenchmark,
   ApiBatch,
   ApiBirdType,
+  ApiCyclePlan,
   ApiDailyLog,
   ApiFarm,
   ApiMetrics,
@@ -37,6 +38,19 @@ export const api = {
     apiFetch<ApiFarm>("/v1/farms/", { method: "POST", body }),
 
   birdTypes: () => apiFetch<ApiBirdType[]>("/v1/bird-types/", { revalidate: REFERENCE_TTL }),
+
+  /** The whole cycle projected before a batch exists, so it can inform the decision. */
+  planPreview: (birdType: string, params: { stocked: number; start: string; costPerBird?: string }) => {
+    const query = new URLSearchParams({
+      stocked: String(params.stocked),
+      start: params.start,
+      ...(params.costPerBird ? { cost_per_bird: params.costPerBird } : {}),
+    });
+    return apiFetch<ApiCyclePlan>(`/v1/bird-types/${birdType}/plan/?${query}`);
+  },
+
+  batchPlan: (farmId: string, batchId: string) =>
+    apiFetch<ApiCyclePlan>(`/v1/farms/${farmId}/batches/${batchId}/plan/`),
 
   vaccinations: (birdType: string) =>
     apiFetch<ApiVaccination[]>(`/v1/bird-types/${birdType}/vaccinations/`, {
