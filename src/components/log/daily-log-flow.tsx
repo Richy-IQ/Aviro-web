@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
-import { saveDailyLog } from "@/app/actions/farm";
+import { recordWeighing, saveDailyLog } from "@/app/actions/farm";
 import { enqueue } from "@/lib/offline/queue";
 import { phaseForDay } from "@/lib/guide";
 import type { ApiDayGuidance } from "@/lib/api/types";
@@ -35,6 +35,18 @@ const HEALTH_OPTIONS = [
 /** Most days are none, one or two. Anything past that is worth typing. */
 const QUICK_DEATHS = [0, 1, 2, 3];
 
+/** Sample sizes that make a fair average without holding up the evening. */
+const SAMPLE_SIZES = [5, 10, 20];
+
+/** Standard practice is a weekly weighing, so ask when a week has passed. */
+const WEIGH_EVERY_DAYS = 7;
+
+function daysSince(iso: string | null): number | null {
+  if (!iso) return null;
+  const then = new Date(`${iso}T00:00:00`).getTime();
+  return Math.floor((Date.now() - then) / 86_400_000);
+}
+
 interface LogData {
   /** null until the farmer has actually answered. Never pre-filled. */
   feedKg: number | null;
@@ -43,6 +55,9 @@ interface LogData {
   health: string;
   /** What feed cost, on the days a farmer actually bought it. */
   feedCost: string;
+  /** A sample put on a scale. Null until they weigh. */
+  weighBirds: number;
+  weighTotalKg: number | null;
   expenses: string;
 }
 
@@ -66,11 +81,15 @@ export function DailyLogFlow({
     cause: null,
     health: "none",
     feedCost: "0",
+    weighBirds: 10,
+    weighTotalKg: null,
     expenses: "0",
   });
 
   // Which entry pad is open, if any. Only one at a time: this is a phone.
-  const [entry, setEntry] = useState<null | "feed" | "deaths" | "feedCost" | "expenses">(null);
+  const [entry, setEntry] = useState<
+    null | "feed" | "deaths" | "feedCost" | "weight" | "expenses"
+  >(null);
   const [buffer, setBuffer] = useState("");
   const [unit, setUnit] = useState<"bags" | "kg">("bags");
   const [more, setMore] = useState(false);
@@ -85,7 +104,17 @@ export function DailyLogFlow({
   const signs = phaseForDay(batch.day, batch.type).warnings;
   const bufferKg = unit === "bags" ? (Number(buffer) || 0) * KG_PER_BAG : Number(buffer) || 0;
 
-  function openEntry(which: "feed" | "deaths" | "feedCost" | "expenses") {
+  // Weighing is the input that turns feed conversion from a guess into a
+  // measurement, so the prompt says why rather than just asking again.
+  const sinceWeighed = daysSince(batch.lastWeighedOn);
+  const weighNudge =
+    sinceWeighed === null
+      ? "These birds have never been weighed, so their feed conversion is an estimate from a growth curve."
+      : sinceWeighed >= WEIGH_EVERY_DAYS
+        ? `Last weighed ${sinceWeighed} days ago. Once a week is enough.`
+        : `Weighed ${sinceWeighed === 0 ? "today" : `${sinceWeighed} day${sinceWeighed === 1 ? "" : "s"} ago`}.`;
+
+  function openEntry(which: "feed" | "deaths" | "feedCost" | "weight" | "expenses") {
     setEntry(which);
     const existing =
       which === "expenses" ? data.expenses : which === "feedCost" ? data.feedCost : "0";
@@ -96,6 +125,7 @@ export function DailyLogFlow({
     if (entry === "feed") patch({ feedKg: bufferKg });
     if (entry === "deaths") patch({ deaths: Number(buffer) || 0 });
     if (entry === "feedCost") patch({ feedCost: buffer || "0" });
+    if (entry === "weight") patch({ weighTotalKg: Number(buffer) || null });
     if (entry === "expenses") patch({ expenses: buffer || "0" });
     setEntry(null);
     setBuffer("");
@@ -131,6 +161,15 @@ export function DailyLogFlow({
 
       const result = await saveDailyLog(batch.id, payload);
       if (result.ok) {
+        // A weighing is its own record. It is saved after the log and its
+        // failure is not allowed to lose the day's feed and deaths.
+        if (data.weighTotalKg) {
+          await recordWeighing(batch.id, {
+            weighed_on: loggedOn,
+            birds_weighed: data.weighBirds,
+            total_weight_kg: String(data.weighTotalKg),
+          });
+        }
         setSaved(true);
         router.refresh();
         return;
@@ -191,9 +230,11 @@ export function DailyLogFlow({
               ? "How much feed?"
               : entry === "feedCost"
                 ? "What did the feed cost?"
-                : entry === "expenses"
-                  ? "How much did you spend?"
-                  : "How many died?"}
+                : entry === "weight"
+                  ? `What did the ${data.weighBirds} birds weigh together?`
+                  : entry === "expenses"
+                    ? "How much did you spend?"
+                    : "How many died?"}
           </h1>
           {isFeed && (
             <div className="mb-4 flex rounded-[10px] bg-bg p-[3px]">
@@ -216,14 +257,25 @@ export function DailyLogFlow({
           )}
           <BigNumDisplay
             value={isMoney ? naira(Number(buffer) || 0) : buffer || "0"}
-            unit={isMoney ? "" : isFeed ? unit : "birds"}
+            unit={isMoney ? "" : isFeed ? unit : entry === "weight" ? "kg" : "birds"}
             sub={
               isFeed && buffer
                 ? `≈ ${bufferKg.toLocaleString("en-NG")} kg today`
                 : "Tap the keypad to enter"
             }
           />
-          <NumPad value={buffer} onChange={setBuffer} decimal={isFeed} zeroKey={!isFeed} />
+          <NumPad
+            value={buffer}
+            onChange={setBuffer}
+            decimal={isFeed || entry === "weight"}
+            zeroKey={!isFeed && entry !== "weight"}
+          />
+          {entry === "weight" && (
+            <p className="caption mt-3 text-xs leading-[1.5]">
+              Put {data.weighBirds} birds on the scale together and enter what they come to. Pick
+              them at random — the biggest birds in the pen are not the flock.
+            </p>
+          )}
           {entry === "feedCost" && (
             <p className="caption mt-3 text-xs leading-[1.5]">
               What you paid for feed today. Leave it at nothing on the days you did not buy any —
@@ -340,6 +392,42 @@ export function DailyLogFlow({
               <Icon name="alert" size={16} className="shrink-0" />
               <span>That&rsquo;s more than 10% of your flock. Call a vet today.</span>
             </div>
+          )}
+        </Section>
+
+        <Section title="Weigh a few birds">
+          {data.weighTotalKg ? (
+            <Answer
+              value={`${(data.weighTotalKg / data.weighBirds).toFixed(2)} kg each`}
+              onChange={() => openEntry("weight")}
+            >
+              {`${data.weighBirds} birds · ${data.weighTotalKg} kg together`}
+              {batch.targetWeight
+                ? ` · target ${batch.targetWeight.toFixed(2)} kg`
+                : ""}
+            </Answer>
+          ) : (
+            <>
+              <div className="mb-2.5 flex flex-wrap gap-2">
+                {SAMPLE_SIZES.map((n) => (
+                  <button
+                    key={n}
+                    type="button"
+                    className="av-chip"
+                    aria-pressed={data.weighBirds === n}
+                    onClick={() => patch({ weighBirds: n })}
+                  >
+                    {n} birds
+                  </button>
+                ))}
+              </div>
+              <button type="button" className="av-btn ghost" onClick={() => openEntry("weight")}>
+                Put them on the scale
+              </button>
+              <p className="caption mt-2 text-xs leading-[1.5]">
+                {weighNudge}
+              </p>
+            </>
           )}
         </Section>
 

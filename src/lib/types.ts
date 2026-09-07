@@ -40,6 +40,12 @@ export interface Batch {
   totalFeed: number;
   totalCost: number;
   avgWeight: number;
+  /** Whether that weight was measured or modelled. */
+  weightSource: "weighed" | "sold" | "estimated" | "unknown";
+  targetWeight: number | null;
+  /** Only set when the birds were actually put on a scale. */
+  weightVsTarget: number | null;
+  lastWeighedOn: string | null;
   /** Null until the birds have enough mass for the ratio to mean anything. */
   fcr: number | null;
   costPerBird: number;

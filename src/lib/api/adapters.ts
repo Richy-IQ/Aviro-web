@@ -46,6 +46,10 @@ export function toBatch(api: ApiBatch, metrics: ApiMetrics): Batch {
     totalFeed: Number(metrics.total_feed_kg),
     totalCost: Number(metrics.total_cost),
     avgWeight: num(metrics.average_weight_kg) ?? 0,
+    weightSource: metrics.weight_source,
+    targetWeight: num(metrics.target_weight_kg),
+    weightVsTarget: num(metrics.weight_vs_target_pct),
+    lastWeighedOn: metrics.last_weighed_on,
     fcr: num(metrics.feed_conversion),
     costPerBird: Number(metrics.cost_per_bird),
 

@@ -84,6 +84,29 @@ export async function saveDailyLog(
   }
 }
 
+/**
+ * Record a sample weighing.
+ *
+ * Separate from the daily log because weighing is weekly, not daily, and
+ * because a failure to save a weighing must not lose the day's feed and deaths
+ * with it.
+ */
+export async function recordWeighing(
+  batchId: string,
+  input: { weighed_on: string; birds_weighed: number; total_weight_kg: string; note?: string },
+): Promise<ActionResult> {
+  try {
+    const farm = await getCurrentFarm();
+    if (!farm) return { ok: false, message: "Create your farm first." };
+
+    await api.recordWeighing(farm.id, batchId, input);
+    revalidateFarmViews();
+    return { ok: true };
+  } catch (error) {
+    return toFailure(error);
+  }
+}
+
 export async function recordSale(
   batchId: string,
   input: {

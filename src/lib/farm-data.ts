@@ -150,6 +150,12 @@ export function makeBatch(day: number): Batch {
     name: "Batch B",
     breed: "Cobb 500",
     type: "broiler",
+    // The demo flock has never been on a scale, which is the state a new
+    // farmer starts in.
+    weightSource: "estimated" as const,
+    targetWeight: null,
+    weightVsTarget: null,
+    lastWeighedOn: null,
     pen: "Pen 1 · Ibadan",
     startDate: "2026-04-28",
     stocked,
