@@ -66,25 +66,35 @@ export function feedVerdict(kg: number, guidance: ApiDayGuidance | null): Verdic
   return null;
 }
 
+/**
+ * The day's context, in one line.
+ *
+ * Deliberately not a card with the number in it: the answer chip below already
+ * says "8.7 kg — as planned", and repeating it pushed the only thing a farmer
+ * came to tap below the fold.
+ */
 export function FeedTarget({ guidance }: { guidance: ApiDayGuidance | null }) {
-  if (!guidance?.expected_kg) return null;
+  if (!guidance) return null;
+
+  const changing =
+    guidance.days_until_change !== null && guidance.days_until_change <= 3
+      ? guidance.days_until_change
+      : null;
 
   return (
-    <div className="mb-4 rounded-card bg-teal-haze p-3.5">
-      <div className="label mb-1">
-        Day {guidance.day} · {guidance.phase_name}
-      </div>
-      <div className="num text-lg font-medium">{feedAmount(Number(guidance.expected_kg))}</div>
-      <div className="caption mt-1 text-xs leading-[1.5]">
-        About {guidance.grams_per_bird}g each for the {guidance.birds_alive.toLocaleString("en-NG")}{" "}
-        birds still alive. Log what you actually gave.
-      </div>
-      {guidance.days_until_change !== null && guidance.days_until_change <= 3 && (
-        <div className="caption mt-2 border-t border-border pt-2 text-xs">
-          Change to {guidance.next_phase_name} in {guidance.days_until_change}{" "}
-          {guidance.days_until_change === 1 ? "day" : "days"}. Mix it into the old feed over three
-          days rather than switching at once.
-        </div>
+    <div className="pt-1 pb-3">
+      <p className="caption text-xs leading-[1.5]">
+        Day {guidance.day}
+        {guidance.phase_name ? ` · ${guidance.phase_name}` : ""}
+        {guidance.grams_per_bird
+          ? ` · about ${guidance.grams_per_bird}g each for ${guidance.birds_alive.toLocaleString("en-NG")} birds`
+          : ""}
+      </p>
+      {changing !== null && (
+        <p className="caption mt-1.5 text-xs leading-[1.5] text-warning-ink">
+          Change to {guidance.next_phase_name} in {changing} {changing === 1 ? "day" : "days"} — mix
+          it into the old feed over three days rather than switching at once.
+        </p>
       )}
     </div>
   );
