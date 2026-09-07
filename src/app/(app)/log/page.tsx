@@ -26,7 +26,7 @@ export default async function LogPage() {
           icon="farm"
           title="No open batch"
           body="Start a batch first, then you can record against it."
-          action={{ label: "Start a batch" }}
+          action={{ label: "Start a batch", href: "/batches/new" }}
         />
       </div>
     );
