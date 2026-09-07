@@ -234,3 +234,41 @@ export interface ApiCyclePlan {
   /** These are projections. The UI must not present them as certainties. */
   caveat: string;
 }
+
+export interface ApiDueDose {
+  day: number;
+  due_on: string;
+  name: string;
+  route: string;
+  notes: string;
+}
+
+/**
+ * The cycle plan narrowed to one day, for the log screen.
+ *
+ * The feed fields are nullable: birds past the end of the feeding programme
+ * still get a log screen, just without a target to compare against.
+ */
+export interface ApiDayGuidance {
+  on: string;
+  day: number;
+  birds_alive: number;
+
+  phase_name: string | null;
+  grams_per_bird: number | null;
+  expected_kg: string | null;
+  expected_bags: string | null;
+  low_kg: string | null;
+  high_kg: string | null;
+
+  next_phase_name: string | null;
+  next_phase_starts_on: string | null;
+  days_until_change: number | null;
+
+  due_today: ApiDueDose[];
+  due_soon: ApiDueDose[];
+
+  /** A day's deaths at or above this is worth asking about. */
+  deaths_watch_from: number;
+  caveat: string;
+}
