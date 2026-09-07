@@ -9,6 +9,7 @@ import { HeaderActions } from "@/components/shell/header-actions";
 import { Empty } from "@/components/ui/empty";
 import { Fab } from "@/components/ui/fab";
 import { PeriodCard } from "@/components/reports/period-report";
+import { NetworkCard } from "@/components/network/farm-row";
 import { Icon } from "@/components/ui/icon";
 import { Logo } from "@/components/ui/logo";
 import { toBatch } from "@/lib/api/adapters";
@@ -17,9 +18,20 @@ import { api } from "@/lib/api/resources";
 import { greetingFor } from "@/lib/current";
 
 export default async function HomePage() {
-  const farm = await getCurrentFarm();
-  // A verified farmer with no farm yet has nothing to show; send them to set up.
-  if (!farm) redirect("/setup");
+  const [farm, organisations] = await Promise.all([
+    getCurrentFarm(),
+    // Cheap, and empty for almost everyone. A cooperative officer often keeps
+    // no birds of their own, so this has to be known before deciding where a
+    // person with no farm belongs.
+    api.organisations().catch(() => []),
+  ]);
+
+  if (!farm) {
+    // Someone who oversees farms without running one is not an unfinished
+    // signup. Sending them to create a farm would be asking them to invent one.
+    if (organisations.length > 0) redirect("/network");
+    redirect("/setup");
+  }
 
   const [rows, alerts, user, week] = await Promise.all([
     api.batches(farm.id),
@@ -50,6 +62,16 @@ export default async function HomePage() {
       {current && (
         <div className="px-4 pt-2 pb-1">
           <TodayCard day={current.day} type={current.type} />
+        </div>
+      )}
+
+      {organisations.length > 0 && (
+        <div className="px-4 pt-3">
+          <NetworkCard
+            id={organisations[0].id}
+            name={organisations[0].name}
+            headline={`${organisations[0].farm_count} member farms · see who needs a call`}
+          />
         </div>
       )}
 
