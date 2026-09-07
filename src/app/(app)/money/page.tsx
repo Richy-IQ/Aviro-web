@@ -12,7 +12,8 @@ export const metadata = { title: "Money · Aviro" };
 
 const LINKS: { href: string; label: string; icon: IconName; sub: string }[] = [
   { href: "/reports", label: "Cycle report", icon: "doc", sub: "Where the money went, cycle by cycle" },
-  { href: "/reports/statement", label: "Income statement", icon: "download", sub: "Print or save as PDF" },
+  { href: "/reports/statement", label: "Income statement", icon: "doc", sub: "For a bank or cooperative. Print or save as PDF" },
+  { href: "/reports/records", label: "Download your records", icon: "download", sub: "Every day and every sale, as a spreadsheet" },
   { href: "/feed-prices", label: "Feed prices", icon: "feed", sub: "Rates across six markets" },
   { href: "/markets", label: "Markets & buyers", icon: "trend", sub: "Live prices and buyers near you" },
   { href: "/benchmark", label: "Benchmark", icon: "trophy", sub: "How you compare with farms like yours" },

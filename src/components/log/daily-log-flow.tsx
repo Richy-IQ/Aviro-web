@@ -41,6 +41,8 @@ interface LogData {
   deaths: number;
   cause: string | null;
   health: string;
+  /** What feed cost, on the days a farmer actually bought it. */
+  feedCost: string;
   expenses: string;
 }
 
@@ -63,11 +65,12 @@ export function DailyLogFlow({
     deaths: 0,
     cause: null,
     health: "none",
+    feedCost: "0",
     expenses: "0",
   });
 
   // Which entry pad is open, if any. Only one at a time: this is a phone.
-  const [entry, setEntry] = useState<null | "feed" | "deaths" | "expenses">(null);
+  const [entry, setEntry] = useState<null | "feed" | "deaths" | "feedCost" | "expenses">(null);
   const [buffer, setBuffer] = useState("");
   const [unit, setUnit] = useState<"bags" | "kg">("bags");
   const [more, setMore] = useState(false);
@@ -82,14 +85,17 @@ export function DailyLogFlow({
   const signs = phaseForDay(batch.day, batch.type).warnings;
   const bufferKg = unit === "bags" ? (Number(buffer) || 0) * KG_PER_BAG : Number(buffer) || 0;
 
-  function openEntry(which: "feed" | "deaths" | "expenses") {
+  function openEntry(which: "feed" | "deaths" | "feedCost" | "expenses") {
     setEntry(which);
-    setBuffer(which === "expenses" ? (data.expenses === "0" ? "" : data.expenses) : "");
+    const existing =
+      which === "expenses" ? data.expenses : which === "feedCost" ? data.feedCost : "0";
+    setBuffer(existing === "0" ? "" : existing);
   }
 
   function commitEntry() {
     if (entry === "feed") patch({ feedKg: bufferKg });
     if (entry === "deaths") patch({ deaths: Number(buffer) || 0 });
+    if (entry === "feedCost") patch({ feedCost: buffer || "0" });
     if (entry === "expenses") patch({ expenses: buffer || "0" });
     setEntry(null);
     setBuffer("");
@@ -111,6 +117,7 @@ export function DailyLogFlow({
       deaths: data.deaths,
       death_cause: data.cause ? (CAUSE_CODES[data.cause] ?? "other") : "",
       health_activity: data.health,
+      feed_cost: String(Number(data.feedCost) || 0),
       other_cost: String(Number(data.expenses) || 0),
     };
 
@@ -175,12 +182,18 @@ export function DailyLogFlow({
   // ── The entry pad. Takes over the screen only while a number is being typed.
   if (entry) {
     const isFeed = entry === "feed";
-    const isExpenses = entry === "expenses";
+    const isMoney = entry === "feedCost" || entry === "expenses";
     return (
       <div className="mx-auto flex w-full max-w-2xl flex-col">
         <div className="px-4 pt-4">
           <h1 className="h1 mb-4 text-2xl">
-            {isFeed ? "How much feed?" : isExpenses ? "How much did you spend?" : "How many died?"}
+            {isFeed
+              ? "How much feed?"
+              : entry === "feedCost"
+                ? "What did the feed cost?"
+                : entry === "expenses"
+                  ? "How much did you spend?"
+                  : "How many died?"}
           </h1>
           {isFeed && (
             <div className="mb-4 flex rounded-[10px] bg-bg p-[3px]">
@@ -202,8 +215,8 @@ export function DailyLogFlow({
             </div>
           )}
           <BigNumDisplay
-            value={isExpenses ? naira(Number(buffer) || 0) : buffer || "0"}
-            unit={isExpenses ? "" : isFeed ? unit : "birds"}
+            value={isMoney ? naira(Number(buffer) || 0) : buffer || "0"}
+            unit={isMoney ? "" : isFeed ? unit : "birds"}
             sub={
               isFeed && buffer
                 ? `≈ ${bufferKg.toLocaleString("en-NG")} kg today`
@@ -211,6 +224,12 @@ export function DailyLogFlow({
             }
           />
           <NumPad value={buffer} onChange={setBuffer} decimal={isFeed} zeroKey={!isFeed} />
+          {entry === "feedCost" && (
+            <p className="caption mt-3 text-xs leading-[1.5]">
+              What you paid for feed today. Leave it at nothing on the days you did not buy any —
+              this is the money that left your hand, not the value of what the birds ate.
+            </p>
+          )}
         </div>
         <div className="sticky bottom-0 mt-4 flex gap-2 border-t border-border bg-surface p-3 px-4">
           <button
@@ -330,7 +349,7 @@ export function DailyLogFlow({
           onClick={() => setMore((m) => !m)}
           className="mt-1 flex w-full items-center justify-between py-3 text-left"
         >
-          <span className="label">Vaccine, medicine or other spending</span>
+          <span className="label">Feed bought, vaccine, or other spending</span>
           <span className="flex items-center gap-1.5 text-[13px] text-teal">
             {more ? "Hide" : summarise(data)}
             <Icon
@@ -363,7 +382,10 @@ export function DailyLogFlow({
                 </button>
               ))}
             </div>
-            <div className="mt-3">
+            <div className="mt-3 flex flex-col gap-2">
+              <Answer value={naira(Number(data.feedCost) || 0)} onChange={() => openEntry("feedCost")}>
+                Feed bought today
+              </Answer>
               <Answer value={naira(Number(data.expenses) || 0)} onChange={() => openEntry("expenses")}>
                 Water, labour, transport, anything else
               </Answer>
@@ -393,7 +415,8 @@ export function DailyLogFlow({
 function summarise(data: LogData): string {
   const bits: string[] = [];
   if (data.health !== "none") bits.push(HEALTH_OPTIONS.find((h) => h.v === data.health)!.label);
-  if (Number(data.expenses) > 0) bits.push(naira(Number(data.expenses)));
+  const money = (Number(data.feedCost) || 0) + (Number(data.expenses) || 0);
+  if (money > 0) bits.push(naira(money));
   return bits.length ? bits.join(" · ") : "None";
 }
 

@@ -321,3 +321,53 @@ export interface ApiPeriodReport {
   headline: string;
   notes: string[];
 }
+
+export interface ApiStatementLine {
+  label: string;
+  amount: string;
+  pct_of_revenue: string;
+}
+
+export interface ApiBatchInPeriod {
+  name: string;
+  bird_type: string;
+  started_on: string;
+  stocked: number;
+  sold: number;
+  status: string;
+}
+
+/** A cash-basis income statement for a calendar period. */
+export interface ApiIncomeStatement {
+  farm_name: string;
+  farm_location: string;
+  prepared_on: string;
+  starts_on: string;
+  ends_on: string;
+
+  revenue: string;
+  revenue_lines: ApiStatementLine[];
+
+  cost_lines: ApiStatementLine[];
+  total_cost: string;
+
+  gross_profit: string;
+  margin: string;
+
+  birds_sold: number;
+  kg_sold: string;
+  revenue_per_bird: string;
+  cost_per_bird: string;
+  profit_per_bird: string;
+  price_per_kg: string | null;
+
+  days_in_period: number;
+  days_logged: number;
+  feed_cost_recorded: boolean;
+
+  batches: ApiBatchInPeriod[];
+  /** How the statement was prepared, printed on its face. */
+  basis: string[];
+  /** What it does not show. Written for the lender, not the farmer. */
+  limitations: string[];
+}

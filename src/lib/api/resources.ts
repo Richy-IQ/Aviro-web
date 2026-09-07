@@ -8,6 +8,7 @@ import type {
   ApiBirdType,
   ApiCyclePlan,
   ApiDayGuidance,
+  ApiIncomeStatement,
   ApiPeriodReport,
   ApiDailyLog,
   ApiFarm,
@@ -95,6 +96,10 @@ export const api = {
   /** How the farm is doing right now, over the last week or month. */
   summary: (farmId: string, period: "week" | "month" = "week") =>
     apiFetch<ApiPeriodReport>(`/v1/farms/${farmId}/summary/?period=${period}`),
+
+  /** A cash-basis income statement for a calendar period. */
+  statement: (farmId: string, period: string) =>
+    apiFetch<ApiIncomeStatement>(`/v1/farms/${farmId}/statement/?period=${period}`),
 
   reports: (farmId: string, period = "12-mo") =>
     apiFetch<ApiReports>(`/v1/farms/${farmId}/reports/?period=${period}`),
