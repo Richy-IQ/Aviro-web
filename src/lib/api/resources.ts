@@ -10,6 +10,7 @@ import type {
   ApiDayGuidance,
   ApiIncomeStatement,
   ApiPeriodReport,
+  ApiWeighing,
   ApiDailyLog,
   ApiFarm,
   ApiMetrics,
@@ -81,6 +82,16 @@ export const api = {
 
   createLog: (farmId: string, batchId: string, body: Record<string, unknown>) =>
     apiFetch<ApiDailyLog>(`/v1/farms/${farmId}/batches/${batchId}/logs/`, {
+      method: "POST",
+      body,
+    }),
+
+  weighings: (farmId: string, batchId: string) =>
+    apiFetch<ApiWeighing[]>(`/v1/farms/${farmId}/batches/${batchId}/weighings/`),
+
+  /** Idempotent per batch and date, like the daily log. */
+  recordWeighing: (farmId: string, batchId: string, body: Record<string, unknown>) =>
+    apiFetch<ApiWeighing>(`/v1/farms/${farmId}/batches/${batchId}/weighings/`, {
       method: "POST",
       body,
     }),

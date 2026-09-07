@@ -61,6 +61,12 @@ export interface ApiMetrics {
   total_cost: string;
   cost_per_bird: string;
   average_weight_kg: string | null;
+  /** Where the weight came from: a scale, the last sale, a growth curve, or nowhere. */
+  weight_source: "weighed" | "sold" | "estimated" | "unknown";
+  target_weight_kg: string | null;
+  /** Only present when the weight was actually measured. */
+  weight_vs_target_pct: string | null;
+  last_weighed_on: string | null;
   feed_conversion: string | null;
   projected_revenue: string | null;
   projected_profit: string | null;
@@ -370,4 +376,17 @@ export interface ApiIncomeStatement {
   basis: string[];
   /** What it does not show. Written for the lender, not the farmer. */
   limitations: string[];
+}
+
+export interface ApiWeighing {
+  id: string;
+  batch: string;
+  weighed_on: string;
+  day_in_cycle: number;
+  birds_weighed: number;
+  total_weight_kg: string;
+  /** Derived by the API, never typed by a farmer. */
+  average_weight_kg: string;
+  note: string;
+  created_at: string;
 }

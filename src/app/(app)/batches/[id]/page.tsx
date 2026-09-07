@@ -98,6 +98,30 @@ export default async function BatchDetailPage({ params }: PageProps<"/batches/[i
             hint="kg feed / kg bird"
             explain="fcr"
           />
+          {/* Stated with its source. A weight off a scale and a weight off a
+              growth curve are different claims, and feed conversion inherits
+              whichever one this is. */}
+          <MetricBig
+            label="Weight per bird"
+            value={batch.avgWeight ? `${batch.avgWeight.toFixed(2)} kg` : "—"}
+            hint={
+              batch.weightSource === "weighed"
+                ? undefined
+                : batch.weightSource === "sold"
+                  ? "from your last sale"
+                  : batch.weightSource === "estimated"
+                    ? "estimated — weigh to be sure"
+                    : "weigh a few birds"
+            }
+            compare={
+              batch.weightVsTarget != null
+                ? {
+                    good: batch.weightVsTarget >= 95,
+                    label: `${batch.weightVsTarget.toFixed(0)}% of target`,
+                  }
+                : undefined
+            }
+          />
           <MetricBig
             label="Mortality"
             value={`${batch.mortPct.toFixed(1)}%`}
