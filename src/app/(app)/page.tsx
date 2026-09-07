@@ -64,6 +64,7 @@ export default async function HomePage() {
             icon="farm"
             title="No batches yet"
             body="A batch is one set of birds you raise together. Start one and Aviro tracks the cost, feed and profit for you."
+            action={{ label: "Start your first batch", href: "/batches/new" }}
           />
         </div>
       ) : (
@@ -71,6 +72,18 @@ export default async function HomePage() {
           {batches.map((b) => (
             <BatchCard key={b.id} batch={b} primary={b.id === current?.id} />
           ))}
+        </div>
+      )}
+
+      {/* Starting a batch was reachable only from the Batches tab, so a farmer
+          who lands on Home had no way to begin one. It is the second thing
+          anyone does here, so it belongs on the first screen they see. */}
+      {batches.length > 0 && (
+        <div className="px-4 pt-3">
+          <Link href="/batches/new" className="av-btn primary full">
+            <Icon name="plus" size={18} stroke={2.2} />
+            Start a new batch
+          </Link>
         </div>
       )}
 
