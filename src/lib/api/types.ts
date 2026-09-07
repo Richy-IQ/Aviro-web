@@ -390,3 +390,56 @@ export interface ApiWeighing {
   note: string;
   created_at: string;
 }
+
+export interface ApiOrganisation {
+  id: string;
+  name: string;
+  kind: string;
+  location: string;
+  role: string;
+  farm_count: number;
+}
+
+export interface ApiNetworkFarmRow {
+  id: string;
+  name: string;
+  location: string;
+  active_batches: number;
+  birds_alive: number;
+  days_logged: number;
+  days_possible: number;
+  last_logged_on: string | null;
+  days_silent: number | null;
+  deaths: number;
+  deaths_before: number;
+  feed_kg: string;
+  weight_vs_target_pct: string | null;
+  /** Worst first: losing, silent, behind, fine, idle. */
+  status: "losing" | "silent" | "behind" | "fine" | "idle";
+  attention: string[];
+}
+
+export interface ApiNetworkOverview {
+  organisation_name: string;
+  period: "week" | "month";
+  label: string;
+  starts_on: string;
+  ends_on: string;
+  days: number;
+
+  farm_count: number;
+  farms_with_birds: number;
+  farms_logging: number;
+  /** Whether these records are worth anything to anyone. */
+  logging_rate_pct: string;
+
+  birds_alive: number;
+  deaths: number;
+  deaths_before: number;
+  feed_kg: string;
+  feed_bags: string;
+
+  rows: ApiNetworkFarmRow[];
+  needs_attention: ApiNetworkFarmRow[];
+  headline: string;
+}
