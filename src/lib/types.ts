@@ -63,6 +63,8 @@ export interface BatchSummary {
   day: number;
   stocked: number;
   alive: number;
+  totalDeaths: number;
+  totalFeed: number;
   costPerBird: number;
   fcr: number | null;
   mortPct: number;

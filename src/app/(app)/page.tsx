@@ -8,6 +8,7 @@ import { TodayCard } from "@/components/guide/today-card";
 import { HeaderActions } from "@/components/shell/header-actions";
 import { Empty } from "@/components/ui/empty";
 import { Fab } from "@/components/ui/fab";
+import { PeriodCard } from "@/components/reports/period-report";
 import { Icon } from "@/components/ui/icon";
 import { Logo } from "@/components/ui/logo";
 import { toBatch } from "@/lib/api/adapters";
@@ -20,10 +21,13 @@ export default async function HomePage() {
   // A verified farmer with no farm yet has nothing to show; send them to set up.
   if (!farm) redirect("/setup");
 
-  const [rows, alerts, user] = await Promise.all([
+  const [rows, alerts, user, week] = await Promise.all([
     api.batches(farm.id),
     api.alerts(farm.id),
     api.me(),
+    // The weekly summary is a nicety, not the screen. If it fails the home
+    // page still loads.
+    api.summary(farm.id, "week").catch(() => null),
   ]);
 
   const batches = rows.map((row) => toBatch(row.batch, row.metrics));
@@ -46,6 +50,14 @@ export default async function HomePage() {
       {current && (
         <div className="px-4 pt-2 pb-1">
           <TodayCard day={current.day} type={current.type} />
+        </div>
+      )}
+
+      {/* The week, unasked for. A farmer should not have to go looking to find
+          out whether the last seven days went well. */}
+      {week && (
+        <div className="px-4 pt-3">
+          <PeriodCard report={week} />
         </div>
       )}
 
