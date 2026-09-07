@@ -7,6 +7,7 @@ import type {
   ApiBatch,
   ApiBirdType,
   ApiCyclePlan,
+  ApiDayGuidance,
   ApiDailyLog,
   ApiFarm,
   ApiMetrics,
@@ -51,6 +52,10 @@ export const api = {
 
   batchPlan: (farmId: string, batchId: string) =>
     apiFetch<ApiCyclePlan>(`/v1/farms/${farmId}/batches/${batchId}/plan/`),
+
+  /** The plan for today only, for the log screen. Never cached: it moves daily. */
+  today: (farmId: string, batchId: string) =>
+    apiFetch<ApiDayGuidance>(`/v1/farms/${farmId}/batches/${batchId}/today/`),
 
   vaccinations: (birdType: string) =>
     apiFetch<ApiVaccination[]>(`/v1/bird-types/${birdType}/vaccinations/`, {

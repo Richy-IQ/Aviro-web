@@ -6,6 +6,9 @@ import { useRouter } from "next/navigation";
 
 import { saveDailyLog } from "@/app/actions/farm";
 import { enqueue } from "@/lib/offline/queue";
+import { phaseForDay } from "@/lib/guide";
+import type { ApiDayGuidance } from "@/lib/api/types";
+import { DoseDue, FeedNote, FeedTarget, SignsToCheck, feedAmount, feedVerdict } from "./day-guidance";
 import { Icon } from "@/components/ui/icon";
 import { naira } from "@/lib/format";
 import type { Batch } from "@/lib/types";
@@ -45,7 +48,14 @@ interface LogData {
   expenses: string;
 }
 
-export function DailyLogFlow({ batch }: { batch: Batch }) {
+export function DailyLogFlow({
+  batch,
+  guidance,
+}: {
+  batch: Batch;
+  /** Null when the plan could not be reached. The log still works without it. */
+  guidance: ApiDayGuidance | null;
+}) {
   const router = useRouter();
   const [step, setStep] = useState(0);
   const [saved, setSaved] = useState(false);
@@ -66,6 +76,10 @@ export function DailyLogFlow({ batch }: { batch: Batch }) {
   const feedKgToday =
     data.feedUnit === "bags" ? (Number(data.feedQty) || 0) * KG_PER_BAG : Number(data.feedQty) || 0;
   const deaths = Number(data.deaths) || 0;
+  const verdict = feedVerdict(feedKgToday, guidance);
+  // The husbandry phase, which is not the feed phase: brooding and heat
+  // stress do not line up with starter and finisher.
+  const signs = phaseForDay(batch.day, batch.type).warnings;
 
   function save() {
     setError(null);
@@ -154,11 +168,26 @@ export function DailyLogFlow({ batch }: { batch: Batch }) {
           <p className="caption mb-4">Day {batch.day} · check before saving.</p>
         </div>
         <div className="px-4">
-          <ReviewRow label="Feed" value={`${feedKgToday.toLocaleString("en-NG")} kg`} sub={data.feedUnit === "bags" ? `${data.feedQty || 0} bags` : undefined} onEdit={() => setStep(0)} />
+          <ReviewRow
+            label="Feed"
+            value={feedAmount(feedKgToday)}
+            sub={
+              guidance?.expected_kg
+                ? `Plan for day ${guidance.day}: ${feedAmount(Number(guidance.expected_kg))}`
+                : undefined
+            }
+            bad={verdict !== null}
+            onEdit={() => setStep(0)}
+          />
           <ReviewRow label="Deaths" value={`${deaths}`} sub={data.cause ?? undefined} bad={deaths > 5} onEdit={() => setStep(1)} />
           <ReviewRow label="Health" value={HEALTH_OPTIONS.find((h) => h.v === data.health)?.label ?? "—"} onEdit={() => setStep(2)} />
           <ReviewRow label="Other expenses" value={naira(expense)} onEdit={() => setStep(3)} />
         </div>
+        {verdict && (
+          <div className="px-4">
+            <FeedNote verdict={verdict} />
+          </div>
+        )}
         {error && <p className="av-err px-4">{error}</p>}
         <div className="flex gap-2 p-4">
           <button type="button" onClick={() => setStep(3)} className="av-btn ghost flex-1">
@@ -191,6 +220,7 @@ export function DailyLogFlow({ batch }: { batch: Batch }) {
 
         {step === 0 && (
           <>
+            <FeedTarget guidance={guidance} />
             <div className="mb-4.5 flex rounded-[10px] bg-bg p-[3px]">
               {(["bags", "kg"] as const).map((u) => (
                 <button
@@ -214,6 +244,7 @@ export function DailyLogFlow({ batch }: { batch: Batch }) {
               sub={data.feedQty ? `≈ ${feedKgToday.toLocaleString("en-NG")} kg total today` : "Tap the keypad to enter"}
             />
             <NumPad value={data.feedQty} onChange={(v) => patch({ feedQty: v })} decimal />
+            {verdict && <FeedNote verdict={verdict} />}
             <div className="mt-4 rounded-card bg-teal-haze p-3.5">
               <div className="caption mb-1">Total this cycle so far</div>
               <div className="num text-lg font-medium">
@@ -252,6 +283,22 @@ export function DailyLogFlow({ batch }: { batch: Batch }) {
                 </div>
               </div>
             )}
+            {data.cause === "Disease symptoms" && <SignsToCheck signs={signs} />}
+            {guidance &&
+              deaths >= guidance.deaths_watch_from &&
+              deaths <= batch.alive * 0.1 &&
+              data.cause !== "Disease symptoms" && (
+                <div className="mt-4 rounded-metric bg-warning-soft p-3 text-[13px] text-warning-ink">
+                  <div className="mb-1 flex items-center gap-2 font-medium">
+                    <Icon name="alert" size={15} className="shrink-0" />
+                    {deaths} in one day is more than a normal day for this flock.
+                  </div>
+                  <p className="leading-[1.5]">
+                    One or two a day is ordinary. Several at once usually means heat, water, or
+                    something starting. Walk the pen before you leave it.
+                  </p>
+                </div>
+              )}
             {deaths > batch.alive * 0.1 && (
               <div className="mt-4 flex gap-2 rounded-metric bg-error-soft p-3 text-[13px] text-error">
                 <Icon name="alert" size={16} className="shrink-0" />
@@ -265,6 +312,7 @@ export function DailyLogFlow({ batch }: { batch: Batch }) {
 
         {step === 2 && (
           <div className="flex flex-col gap-2">
+            {guidance && <DoseDue doses={guidance.due_today} soon={guidance.due_soon} />}
             {HEALTH_OPTIONS.map((o) => (
               <button
                 key={o.v}

@@ -34,6 +34,12 @@ export default async function LogPage() {
 
   const batch = toBatch(open.batch, open.metrics);
 
+  // What today should look like: the feed target for the birds still alive,
+  // any dose due, and the point at which a day's deaths is worth asking about.
+  // A farmer can still log without it, so a failure here must not take the
+  // screen down with it.
+  const guidance = await api.today(farm.id, batch.id).catch(() => null);
+
   return (
     <div>
       <TopBar
@@ -41,7 +47,7 @@ export default async function LogPage() {
         subtitle={batch.name}
         backHref={`/batches/${batch.id}`}
       />
-      <DailyLogFlow batch={batch} />
+      <DailyLogFlow batch={batch} guidance={guidance} />
     </div>
   );
 }
