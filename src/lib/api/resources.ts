@@ -8,6 +8,7 @@ import type {
   ApiBirdType,
   ApiCyclePlan,
   ApiDayGuidance,
+  ApiPeriodReport,
   ApiDailyLog,
   ApiFarm,
   ApiMetrics,
@@ -90,6 +91,10 @@ export const api = {
     }),
 
   alerts: (farmId: string) => apiFetch<ApiAlert[]>(`/v1/farms/${farmId}/alerts/`),
+
+  /** How the farm is doing right now, over the last week or month. */
+  summary: (farmId: string, period: "week" | "month" = "week") =>
+    apiFetch<ApiPeriodReport>(`/v1/farms/${farmId}/summary/?period=${period}`),
 
   reports: (farmId: string, period = "12-mo") =>
     apiFetch<ApiReports>(`/v1/farms/${farmId}/reports/?period=${period}`),

@@ -272,3 +272,52 @@ export interface ApiDayGuidance {
   deaths_watch_from: number;
   caveat: string;
 }
+
+export interface ApiPeriodBatchLine {
+  id: string;
+  name: string;
+  bird_type: string;
+  day: number;
+  birds_alive: number;
+  deaths: number;
+  feed_kg: string;
+  days_logged: number;
+}
+
+export interface ApiUpcoming {
+  batch_name: string;
+  day: number;
+  due_on: string;
+  what: string;
+}
+
+/** The farm over the last week or month, set against the window before it. */
+export interface ApiPeriodReport {
+  period: "week" | "month";
+  label: string;
+  starts_on: string;
+  ends_on: string;
+  days: number;
+
+  days_logged: number;
+  days_possible: number;
+  active_batches: number;
+  birds_alive: number;
+
+  deaths: number;
+  deaths_before: number;
+
+  feed_kg: string;
+  feed_bags: string;
+  feed_before_kg: string;
+
+  recorded_spend: string;
+  revenue: string;
+  /** False when no feed cost was recorded — the report says so rather than showing zero. */
+  feed_cost_recorded: boolean;
+
+  batches: ApiPeriodBatchLine[];
+  upcoming: ApiUpcoming[];
+  headline: string;
+  notes: string[];
+}

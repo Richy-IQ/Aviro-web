@@ -44,10 +44,22 @@ export function BatchCard({ batch, primary }: { batch: Batch | BatchSummary; pri
         <StatusPill status={batch.status} />
       </div>
 
+      {/* Plain words, because this is the first screen a first-time farmer sees.
+          "FCR 1.62" means nothing to someone who has never raised birds, and
+          "Mortality 2.4%" hides the number they actually think in: how many
+          birds are gone. Feed per bird is the same unit the cycle plan quotes,
+          so the two can be read against each other. */}
       <div className="mb-3 flex gap-4">
-        <MicroStat label="Cost / bird" value={naira(batch.costPerBird)} />
-        <MicroStat label="Mortality" value={`${batch.mortPct.toFixed(1)}%`} bad={batch.mortPct > 5} />
-        <MicroStat label="FCR" value={batch.fcr != null ? batch.fcr.toFixed(2) : "—"} />
+        <MicroStat label="Spent per bird" value={naira(batch.costPerBird)} />
+        <MicroStat
+          label="Birds lost"
+          value={`${batch.totalDeaths.toLocaleString("en-NG")} of ${batch.stocked.toLocaleString("en-NG")}`}
+          bad={batch.mortPct > 5}
+        />
+        <MicroStat
+          label="Feed per bird"
+          value={batch.stocked ? `${(batch.totalFeed / batch.stocked).toFixed(1)} kg` : "—"}
+        />
       </div>
 
       <div className="av-progress">
