@@ -5,6 +5,9 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import { createBatch } from "@/app/actions/farm";
+import { previewPlan } from "@/app/actions/plan";
+import { CyclePlan } from "@/components/plan/cycle-plan";
+import type { ApiCyclePlan } from "@/lib/api/types";
 import { ChoiceCard, FieldLabel, NairaInput, RadioRow, Select } from "@/components/form/fields";
 import { StepShell } from "@/components/form/step-shell";
 import { Icon } from "@/components/ui/icon";
@@ -13,12 +16,15 @@ import { naira } from "@/lib/format";
 import type { BirdType } from "@/lib/types";
 
 const PENS = ["Pen 1", "Pen 2", "Pen 3"];
-const TOTAL = 4;
+// A fifth step: the plan. It comes before "create" because seeing that 500
+// broilers need 81 bags is exactly the kind of thing that changes the decision.
+const TOTAL = 5;
 const TITLES = [
   "What are you raising?",
   "How many birds did you stock?",
   "What did you pay per bird?",
   "Which pen?",
+  "Here is your plan",
 ];
 
 interface NewBatch {
@@ -42,6 +48,8 @@ export function NewBatchFlow() {
   const [step, setStep] = useState(0);
   const [created, setCreated] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [plan, setPlan] = useState<ApiCyclePlan | null>(null);
+  const [planning, setPlanning] = useState(false);
   const [pending, startTransition] = useTransition();
   const [data, setData] = useState<NewBatch>({
     name: "Batch C",
@@ -57,6 +65,26 @@ export function NewBatchFlow() {
 
   const patch = (p: Partial<NewBatch>) => setData((d) => ({ ...d, ...p }));
   const capital = data.stocked * data.costPerBird + data.transportCost;
+
+  /** Work out the plan when the farmer reaches the review step. */
+  function loadPlan() {
+    setError(null);
+    setPlanning(true);
+    startTransition(async () => {
+      const result = await previewPlan({
+        birdType: data.type,
+        stocked: data.stocked,
+        start: data.dateStocked,
+        costPerBird: String(data.costPerBird),
+      });
+      setPlanning(false);
+      if (!result.ok) {
+        setError(result.message ?? "Could not work out the plan.");
+        return;
+      }
+      setPlan(result.data ?? null);
+    });
+  }
 
   function submit() {
     setError(null);
@@ -123,10 +151,24 @@ export function NewBatchFlow() {
       title={TITLES[step]}
       subtitle={step === 3 ? "Optional. Helpful if you have multiple pens." : undefined}
       onBack={step > 0 ? () => setStep((s) => s - 1) : undefined}
-      onSkip={step === 3 ? submit : undefined}
-      nextLabel={step === 3 ? (pending ? "Creating…" : "Create batch") : "Next"}
-      nextDisabled={pending}
-      onNext={() => (step === 3 ? submit() : setStep((s) => s + 1))}
+      nextLabel={
+        step === TOTAL - 1
+          ? pending
+            ? "Creating…"
+            : "Create batch"
+          : step === 3
+            ? "See the plan"
+            : "Next"
+      }
+      nextDisabled={pending || (step === TOTAL - 1 && !plan)}
+      onNext={() => {
+        if (step === TOTAL - 1) {
+          submit();
+          return;
+        }
+        if (step === 3) loadPlan();
+        setStep((s) => s + 1);
+      }}
     >
       {error && <p className="av-err mb-3">{error}</p>}
       {step === 0 && (
@@ -225,6 +267,22 @@ export function NewBatchFlow() {
                 : ""}
             </div>
           </div>
+        </>
+      )}
+
+      {step === 4 && (
+        <>
+          {planning && (
+            <div className="av-card">
+              <div className="av-skeleton h-6 w-2/3" />
+              <div className="av-skeleton mt-3 h-4 w-1/2" />
+              <p className="caption mt-4">Working out how much feed you will need…</p>
+            </div>
+          )}
+          {plan && <CyclePlan plan={plan} />}
+          {!planning && !plan && !error && (
+            <p className="caption">Could not work out the plan. You can still create the batch.</p>
+          )}
         </>
       )}
 
