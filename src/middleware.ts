@@ -28,6 +28,13 @@ export function middleware(request: NextRequest) {
     PUBLIC_FILES.includes(pathname) ||
     PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`));
 
+  // Route handlers answer with a status code, never a redirect. Sending a 307
+  // to /welcome would hand the offline queue an HTML page where it expected a
+  // result, and it would read that as a successful sync.
+  if (pathname.startsWith("/api/")) {
+    return NextResponse.next();
+  }
+
   if (!signedIn && !isPublic) {
     return NextResponse.redirect(new URL("/welcome", request.url));
   }
