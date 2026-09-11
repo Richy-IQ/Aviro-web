@@ -4,6 +4,7 @@ import { NetworkFarmRow } from "@/components/network/farm-row";
 import { Empty } from "@/components/ui/empty";
 import { TopBar } from "@/components/ui/top-bar";
 import { api } from "@/lib/api/resources";
+import { naira, shortDate } from "@/lib/format";
 
 export const metadata = { title: "Member farms · Aviro" };
 
@@ -33,7 +34,10 @@ export default async function NetworkPage({ searchParams }: PageProps<"/network"
   const org = organisations.find((o) => o.id === wanted) ?? organisations[0];
   const period = params.period === "month" ? "month" : "week";
 
-  const overview = await api.networkOverview(org.id, period).catch(() => null);
+  const [overview, invoices] = await Promise.all([
+    api.networkOverview(org.id, period).catch(() => null),
+    api.invoices(org.id).catch(() => []),
+  ]);
   const settled = overview?.rows.filter((r) => r.attention.length === 0) ?? [];
 
   return (
@@ -122,6 +126,30 @@ export default async function NetworkPage({ searchParams }: PageProps<"/network"
               </div>
               {overview.needs_attention.map((row) => (
                 <NetworkFarmRow key={row.id} row={row} />
+              ))}
+            </>
+          )}
+
+          {invoices.length > 0 && (
+            <>
+              <div className="label mt-5 mb-2">Invoices</div>
+              {invoices.map((inv) => (
+                <Link
+                  key={inv.id}
+                  href={`/network/invoices/${inv.id}?org=${org.id}`}
+                  className="av-card mb-2.5 flex items-center gap-3"
+                >
+                  <div className="min-w-0 flex-1">
+                    <div className="text-[15px] font-medium">{inv.number}</div>
+                    <div className="caption mt-0.5 text-xs">
+                      {inv.farms_count} farms · {inv.status_label}
+                      {inv.status === "sent" && inv.due_on ? ` · due ${shortDate(inv.due_on)}` : ""}
+                    </div>
+                  </div>
+                  <div className="num text-[15px] font-medium">
+                    {naira(Number(inv.amount))}
+                  </div>
+                </Link>
               ))}
             </>
           )}

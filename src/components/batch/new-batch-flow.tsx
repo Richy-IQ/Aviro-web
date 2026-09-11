@@ -140,6 +140,15 @@ export function NewBatchFlow() {
             I&rsquo;ll log later
           </Link>
         </div>
+
+        {/* Offered here, once, and never in the way. The batch is already
+            created and everything to do with the birds is free. */}
+        <p className="caption mx-auto mt-8 max-w-[300px] text-xs leading-[1.55]">
+          Will you need a bank statement for this batch?{" "}
+          <Link href="/billing" className="av-link">
+            See the money tools
+          </Link>
+        </p>
       </div>
     );
   }

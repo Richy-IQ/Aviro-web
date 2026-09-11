@@ -32,3 +32,8 @@ export class ApiUnreachable extends Error {
     this.cause = cause;
   }
 }
+
+/** A paid tool asked for by a farm that has not paid for it. */
+export function isPaymentRequired(error: unknown): boolean {
+  return error instanceof ApiError && error.status === 402;
+}

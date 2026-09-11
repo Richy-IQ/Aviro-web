@@ -11,6 +11,7 @@ import { naira, nairaShort } from "@/lib/format";
 export const metadata = { title: "Money · Aviro" };
 
 const LINKS: { href: string; label: string; icon: IconName; sub: string }[] = [
+  { href: "/billing", label: "Money tools", icon: "naira", sub: "Statement, downloads and monthly report" },
   { href: "/reports", label: "Cycle report", icon: "doc", sub: "Where the money went, cycle by cycle" },
   { href: "/reports/statement", label: "Income statement", icon: "doc", sub: "For a bank or cooperative. Print or save as PDF" },
   { href: "/reports/records", label: "Download your records", icon: "download", sub: "Every day and every sale, as a spreadsheet" },

@@ -1,9 +1,11 @@
 import { redirect } from "next/navigation";
 
+import { UnlockCard } from "@/components/billing/unlock-card";
 import { PeriodReport } from "@/components/reports/period-report";
 import { Empty } from "@/components/ui/empty";
 import { TopBar } from "@/components/ui/top-bar";
 import { getCurrentFarm } from "@/lib/api/current-farm";
+import { isPaymentRequired } from "@/lib/api/errors";
 import { api } from "@/lib/api/resources";
 import Link from "next/link";
 
@@ -22,7 +24,13 @@ export default async function SummaryPage({ searchParams }: PageProps<"/summary"
   const raw = typeof params.period === "string" ? params.period : "week";
   const period = raw === "month" ? "month" : "week";
 
-  const report = await api.summary(farm.id, period).catch(() => null);
+  const result = await api.summary(farm.id, period).then(
+    (report) => ({ report, error: null }),
+    (error: unknown) => ({ report: null, error }),
+  );
+  const report = result.report;
+  const locked = isPaymentRequired(result.error);
+  const billing = locked ? await api.billing(farm.id) : null;
 
   return (
     <div className="mx-auto w-full max-w-2xl pb-24">
@@ -41,7 +49,12 @@ export default async function SummaryPage({ searchParams }: PageProps<"/summary"
         ))}
       </div>
 
-      {report ? (
+      {billing ? (
+        <UnlockCard
+          billing={billing}
+          reason="The monthly report is part of the money tools. The weekly report is always free."
+        />
+      ) : report ? (
         <PeriodReport report={report} />
       ) : (
         <Empty

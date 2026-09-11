@@ -443,3 +443,67 @@ export interface ApiNetworkOverview {
   needs_attention: ApiNetworkFarmRow[];
   headline: string;
 }
+
+/** Whether a farm has the money tools today, and why. */
+export interface ApiAccess {
+  active: boolean;
+  source: "batch" | "month" | "cooperative" | null;
+  until: string | null;
+  covered_by: string | null;
+}
+
+/** What paying now would buy, shown before anyone presses the button. */
+export interface ApiOffer {
+  kind: "batch" | "month";
+  amount: string;
+  covers_from: string;
+  covers_until: string;
+  description: string;
+}
+
+export interface ApiPayment {
+  id: string;
+  reference: string;
+  kind: "batch" | "month";
+  kind_label: string;
+  status: "pending" | "paid" | "failed";
+  status_label: string;
+  amount: string;
+  currency: string;
+  batch_name: string | null;
+  paid_at: string | null;
+  covers_from: string | null;
+  covers_until: string | null;
+  created_at: string;
+}
+
+export interface ApiBilling {
+  access: ApiAccess;
+  offer: ApiOffer | null;
+  offer_batch: { id: string; name: string } | null;
+  prices: { batch: number; month: number };
+  included: string[];
+  /** Written down so it cannot quietly shrink. */
+  always_free: string[];
+  payments: ApiPayment[];
+  /** Only an owner or manager can spend the farm's money. */
+  can_pay: boolean;
+}
+
+export interface ApiCoopInvoice {
+  id: string;
+  number: string;
+  organisation_name: string;
+  status: "draft" | "sent" | "paid" | "cancelled";
+  status_label: string;
+  period_start: string;
+  period_end: string;
+  farms_count: number;
+  price_per_farm: string;
+  amount: string;
+  issued_on: string | null;
+  due_on: string | null;
+  paid_on: string | null;
+  note: string;
+  bank: { bank: string; account_number: string; account_name: string };
+}

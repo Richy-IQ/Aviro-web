@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
+import { UnlockCard } from "@/components/billing/unlock-card";
 import { Icon } from "@/components/ui/icon";
 import { TopBar } from "@/components/ui/top-bar";
 import { getCurrentFarm } from "@/lib/api/current-farm";
+import { api } from "@/lib/api/resources";
 import { PERIODS } from "@/lib/statement";
 
 export const metadata = { title: "Download your records · Aviro" };
@@ -24,6 +26,19 @@ const DATASETS = [
 export default async function RecordsPage() {
   const farm = await getCurrentFarm();
   if (!farm) redirect("/setup");
+
+  const billing = await api.billing(farm.id);
+  if (!billing.access.active) {
+    return (
+      <div className="pb-24">
+        <TopBar title="Download your records" backHref="/reports" />
+        <UnlockCard
+          billing={billing}
+          reason="Downloading your records is part of the money tools: every day and every sale as a spreadsheet, for a lender or an accountant to check."
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto w-full max-w-2xl pb-24">
