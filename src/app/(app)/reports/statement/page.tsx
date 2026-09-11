@@ -1,10 +1,12 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
+import { UnlockCard } from "@/components/billing/unlock-card";
 import { PrintButton } from "@/components/reports/print-button";
 import { Empty } from "@/components/ui/empty";
 import { Logo } from "@/components/ui/logo";
 import { getCurrentFarm } from "@/lib/api/current-farm";
+import { isPaymentRequired } from "@/lib/api/errors";
 import { api } from "@/lib/api/resources";
 import { fmtN, naira } from "@/lib/format";
 import { PERIODS, isPeriod, type Period } from "@/lib/statement";
@@ -28,10 +30,23 @@ export default async function StatementPage({ searchParams }: PageProps<"/report
   const raw = typeof params.period === "string" ? params.period : "12-mo";
   const period: Period = isPeriod(raw) ? raw : "12-mo";
 
-  const [statement, user] = await Promise.all([
-    api.statement(farm.id, period).catch(() => null),
+  const [result, user] = await Promise.all([
+    api.statement(farm.id, period).then(
+      (statement) => ({ statement, error: null }),
+      (error: unknown) => ({ statement: null, error }),
+    ),
     api.me(),
   ]);
+
+  if (isPaymentRequired(result.error)) {
+    return (
+      <UnlockCard
+        billing={await api.billing(farm.id)}
+        reason="The income statement is part of the money tools: a bank-ready summary of what the farm earned and spent, printed or saved as a PDF."
+      />
+    );
+  }
+  const statement = result.statement;
 
   if (!statement) {
     return (

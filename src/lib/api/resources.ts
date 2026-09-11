@@ -8,7 +8,11 @@ import type {
   ApiBirdType,
   ApiCyclePlan,
   ApiDayGuidance,
+  ApiAccess,
+  ApiBilling,
+  ApiCoopInvoice,
   ApiIncomeStatement,
+  ApiPayment,
   ApiNetworkOverview,
   ApiOrganisation,
   ApiPeriodReport,
@@ -109,6 +113,28 @@ export const api = {
   /** How the farm is doing right now, over the last week or month. */
   summary: (farmId: string, period: "week" | "month" = "week") =>
     apiFetch<ApiPeriodReport>(`/v1/farms/${farmId}/summary/?period=${period}`),
+
+  billing: (farmId: string) => apiFetch<ApiBilling>(`/v1/farms/${farmId}/billing/`),
+
+  /** Starts a payment. Returns the provider's page to send the farmer to. */
+  checkout: (farmId: string, batchId: string) =>
+    apiFetch<{ authorization_url: string; reference: string }>(
+      `/v1/farms/${farmId}/batches/${batchId}/checkout/`,
+      { method: "POST" },
+    ),
+
+  /** Asks the provider what happened. Never trusts the returning browser. */
+  confirmPayment: (reference: string) =>
+    apiFetch<{ payment: ApiPayment; access: ApiAccess }>("/v1/billing/confirm/", {
+      method: "POST",
+      body: { reference },
+    }),
+
+  invoices: (organisationId: string) =>
+    apiFetch<ApiCoopInvoice[]>(`/v1/organisations/${organisationId}/invoices/`),
+
+  invoice: (organisationId: string, invoiceId: string) =>
+    apiFetch<ApiCoopInvoice>(`/v1/organisations/${organisationId}/invoices/${invoiceId}/`),
 
   /** The cooperatives this person helps run. Empty for an ordinary farmer. */
   organisations: () => apiFetch<ApiOrganisation[]>("/v1/organisations/"),

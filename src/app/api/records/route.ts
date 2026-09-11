@@ -35,6 +35,9 @@ export async function GET(request: NextRequest) {
     { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" },
   );
 
+  if (upstream.status === 402) {
+    return new Response("Downloads are part of the money tools.", { status: 402 });
+  }
   if (!upstream.ok) {
     return new Response("Could not build that file just now.", { status: 502 });
   }
